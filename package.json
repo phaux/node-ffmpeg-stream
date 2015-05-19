@@ -1,0 +1,35 @@
+{
+  "name": "ffmpeg-stream",
+  "version": "0.0.0",
+  "description": "Stream-based media transcoding",
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/phaux/node-ffmpeg-stream.git"
+  },
+  "keywords": [
+    "ffmpeg",
+    "avconv",
+    "convert",
+    "transcode",
+    "media",
+    "audio",
+    "video",
+    "image",
+    "resize"
+  ],
+  "author": "phaux <phaux4@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/phaux/ffmpeg-stream/issues"
+  },
+  "homepage": "https://github.com/phaux/ffmpeg-stream",
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "coffee-script": "~1.9.2",
+    "is-mime": "^0.2.0",
+    "mocha": "~2.2.4"
+  }
+}
