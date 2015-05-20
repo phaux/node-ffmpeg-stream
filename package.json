@@ -23,9 +23,9 @@
   "author": "phaux <phaux4@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/phaux/ffmpeg-stream/issues"
+    "url": "https://github.com/phaux/node-ffmpeg-stream/issues"
   },
-  "homepage": "https://github.com/phaux/ffmpeg-stream",
+  "homepage": "https://github.com/phaux/node-ffmpeg-stream",
   "devDependencies": {
     "chai": "^2.3.0",
     "coffee-script": "~1.9.2",
