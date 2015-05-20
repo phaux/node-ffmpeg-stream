@@ -2,6 +2,8 @@
 
 # FFmpeg-Stream
 
+[![Build Status](https://travis-ci.org/phaux/node-ffmpeg-stream.svg)](https://travis-ci.org/phaux/node-ffmpeg-stream)
+
 Stream based media converting library for Node.js.
 
 Requires ffmpeg software installed and in PATH.
