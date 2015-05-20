@@ -11,7 +11,7 @@ Requires ffmpeg software installed and in PATH.
 ## Examples
 
 ```js
-var ffmpeg = require('../../').ffmpeg
+var ffmpeg = require('ffmpeg-stream').ffmpeg
   , fs = require('fs')
   , converter, input
 
