@@ -1,5 +1,3 @@
-[TOC]
-
 # FFmpeg-Stream
 
 [![Build Status](https://travis-ci.org/phaux/node-ffmpeg-stream.svg)](https://travis-ci.org/phaux/node-ffmpeg-stream)
