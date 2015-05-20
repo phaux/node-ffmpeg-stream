@@ -3,5 +3,5 @@ node_js:
 - stable
 addons:
   apt:
-  	packages:
-  	- ffmpeg
+    packages:
+    - ffmpeg
