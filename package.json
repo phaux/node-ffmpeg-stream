@@ -31,5 +31,8 @@
     "coffee-script": "~1.9.2",
     "is-mime": "^0.2.0",
     "mocha": "~2.2.4"
+  },
+  "dependencies": {
+    "debug": "^2.2.0"
   }
 }

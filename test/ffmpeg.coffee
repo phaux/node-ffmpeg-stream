@@ -19,7 +19,7 @@ describe 'ffmpeg', ->
 		.on 'end', ->
 			expect @mimetype
 			.to.equal 'image/png'
-			done()
+			setTimeout done, 10
 
 		converter.run()
 
@@ -38,7 +38,7 @@ describe 'ffmpeg', ->
 		.pipe checkStream types
 		.on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
 
-		converter.on 'finish', done
+		converter.on 'finish', -> setTimeout done, 10
 
 		converter.run()
 
