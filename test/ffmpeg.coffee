@@ -32,13 +32,13 @@ describe 'ffmpeg', ->
 
 		converter.output
 			mime: 'image/png'
-			vf: 'crop=300:300'
+			vf: 'crop=50:50'
 		.pipe checkStream types
 		.on 'end', -> expect(@mimetype).to.equal 'image/png'
 
 		converter.output
 			mime: 'image/jpeg'
-			vf: 'crop=300:300,scale=100:100'
+			vf: 'scale=100:100'
 		.pipe checkStream types
 		.on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
 
