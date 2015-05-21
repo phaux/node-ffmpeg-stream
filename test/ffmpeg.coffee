@@ -30,11 +30,15 @@ describe 'ffmpeg', ->
 		createReadStream "#{__dirname}/media/cat.jpg"
 		.pipe converter.input mime: 'image/jpeg'
 
-		converter.output mime: 'image/png'
+		converter.output
+			mime: 'image/png'
+			vf: 'crop=300:300'
 		.pipe checkStream types
 		.on 'end', -> expect(@mimetype).to.equal 'image/png'
 
-		converter.output mime: 'image/jpeg'
+		converter.output
+			mime: 'image/jpeg'
+			vf: 'crop=300:300,scale=100:100'
 		.pipe checkStream types
 		.on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
 
