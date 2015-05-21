@@ -27,8 +27,8 @@ describe 'ffmpeg', ->
 
 		converter = ffmpeg()
 
-		createReadStream "#{__dirname}/media/pink.png"
-		.pipe converter.input mime: 'image/png'
+		createReadStream "#{__dirname}/media/cat.jpg"
+		.pipe converter.input mime: 'image/jpeg'
 
 		converter.output mime: 'image/png'
 		.pipe checkStream types
