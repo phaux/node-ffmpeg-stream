@@ -33,6 +33,7 @@
     "mocha": "~2.2.4"
   },
   "dependencies": {
-    "debug": "^2.2.0"
+    "debug": "^2.2.0",
+    "sync-exec": "^0.5.0"
   }
 }

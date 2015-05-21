@@ -92,5 +92,6 @@ The output streams are usually empty in this case.
 -	[ ] More examples
 	-	[ ] Streaming to HTTP response
 	-	[ ] POST request -> Converter -> MongoDB GridFS
--	[ ] Better error messages
+-	[x] Better error messages
+-   [ ] Emit `frame` event for each frame transcoded
 -	[ ] Auto-detect input format (difficult when there's no filename)
