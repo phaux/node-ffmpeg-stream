@@ -35,5 +35,13 @@
   "dependencies": {
     "debug": "^2.2.0",
     "sync-exec": "^0.5.0"
+  },
+  "coffeelintConfig": {
+    "indentation": {
+      "level": "ignore"
+    },
+    "no_tabs": {
+      "level": "ignore"
+    }
   }
 }
