@@ -1,3 +1,3 @@
 module.exports = {
-	ffmpeg: require('./lib/ffmpeg'),
+  ffmpeg: require('./lib/ffmpeg'),
 }

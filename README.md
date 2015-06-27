@@ -21,15 +21,15 @@ fs.createReadStream(__dirname + '/cat.jpg').pipe(input)
 
 // create an output stream, crop image, save to file
 converter.output({
-	mime: 'image/jpeg',
-	vf: 'crop=300:300',
+  mime: 'image/jpeg',
+  vf: 'crop=300:300',
 })
 .pipe(fs.createWriteStream(__dirname + '/cat_full.jpg'))
 
 // same, but also resize image
 converter.output({
-	mime: 'image/jpeg',
-	vf: 'crop=300:300,scale=100:100',
+  mime: 'image/jpeg',
+  vf: 'crop=300:300,scale=100:100',
 })
 .pipe(fs.createWriteStream(__dirname + '/cat_thumb.jpg'))
 
@@ -54,9 +54,9 @@ The `options` argument takes an object of ffmpeg option/value pairs.
 
 Following extra options are available:
 
--	`mime` - MIME type of the input stream.
-	Passing this option sets the `f` option accordingly.
-	E.g. passing `image/jpeg` will add `-f mjpeg` to ffmpeg input options.
+- `mime` - MIME type of the input stream.
+  Passing this option sets the `f` option accordingly.
+  E.g. passing `image/jpeg` will add `-f mjpeg` to ffmpeg input options.
 
 ### method `ffmpeg.output(options)`
 
@@ -66,9 +66,9 @@ The `options` argument takes an object of ffmpeg option/value pairs.
 
 Following extra options are available:
 
--	`mime` - MIME type of the output stream.
-	Passing this option sets the `f` and `c:v`/`c:a` options accordingly.
-	For example passing `image/png` will add `-f image2 -c:v png` to ffmpeg output options.
+- `mime` - MIME type of the output stream.
+  Passing this option sets the `f` and `c:v`/`c:a` options accordingly.
+  For example passing `image/png` will add `-f image2 -c:v png` to ffmpeg output options.
 
 ### method `ffmpeg.run()`
 
@@ -85,13 +85,13 @@ The output streams are usually empty in this case.
 
 # Todos
 
--	[ ] Add additional convenience APIs
-	-	[ ] Image resizing and thumbnail generation
-	-	[ ] Applying watermark to images
-	-	[ ] Video screenshots
--	[ ] More examples
-	-	[ ] Streaming to HTTP response
-	-	[ ] POST request -> Converter -> MongoDB GridFS
--	[x] Better error messages
--   [ ] Emit `frame` event for each frame transcoded
--	[ ] Auto-detect input format (difficult when there's no filename)
+- [ ] Add additional convenience APIs
+  - [ ] Image resizing and thumbnail generation
+  - [ ] Applying watermark to images
+  - [ ] Video screenshots
+- [ ] More examples
+  - [ ] Streaming to HTTP response
+  - [ ] POST request -> Converter -> MongoDB GridFS
+- [x] Better error messages
+- [ ] Emit `frame` event for each frame transcoded
+- [ ] Auto-detect input format (difficult when there's no filename)

@@ -5,58 +5,58 @@
 
 describe 'ffmpeg', ->
 
-	types = ['image/png', 'image/jpeg', 'image/gif']
+  types = ['image/png', 'image/jpeg', 'image/gif']
 
-	it 'should do basic conversion', (done) ->
+  it 'should do basic conversion', (done) ->
 
-		converter = ffmpeg()
+    converter = ffmpeg()
 
-		createReadStream "#{__dirname}/media/cat.jpg"
-		.pipe converter.input mime: 'image/jpeg'
+    createReadStream "#{__dirname}/media/cat.jpg"
+    .pipe converter.input mime: 'image/jpeg'
 
-		converter.output mime: 'image/png'
-		.pipe checkStream types
-		.on 'end', ->
-			expect @mimetype
-			.to.equal 'image/png'
-			setTimeout done, 10
+    converter.output mime: 'image/png'
+    .pipe checkStream types
+    .on 'end', ->
+      expect @mimetype
+      .to.equal 'image/png'
+      setTimeout done, 10
 
-		converter.run()
+    converter.run()
 
-	it 'should handle multiple outputs', (done) ->
+  it 'should handle multiple outputs', (done) ->
 
-		converter = ffmpeg()
+    converter = ffmpeg()
 
-		createReadStream "#{__dirname}/media/cat.jpg"
-		.pipe converter.input mime: 'image/jpeg'
+    createReadStream "#{__dirname}/media/cat.jpg"
+    .pipe converter.input mime: 'image/jpeg'
 
-		converter.output
-			mime: 'image/png'
-			vf: 'crop=50:50'
-		.pipe checkStream types
-		.on 'end', -> expect(@mimetype).to.equal 'image/png'
+    converter.output
+      mime: 'image/png'
+      vf: 'crop=50:50'
+    .pipe checkStream types
+    .on 'end', -> expect(@mimetype).to.equal 'image/png'
 
-		converter.output
-			mime: 'image/jpeg'
-			vf: 'scale=100:100'
-		.pipe checkStream types
-		.on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
+    converter.output
+      mime: 'image/jpeg'
+      vf: 'scale=100:100'
+    .pipe checkStream types
+    .on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
 
-		converter.on 'finish', -> setTimeout done, 10
+    converter.on 'finish', -> setTimeout done, 10
 
-		converter.run()
+    converter.run()
 
-	it 'should error on invalid file', (done) ->
+  it 'should error on invalid file', (done) ->
 
-		converter = ffmpeg()
+    converter = ffmpeg()
 
-		createReadStream "#{__dirname}/media/empty"
-		.pipe converter.input mime: 'image/jpeg'
+    createReadStream "#{__dirname}/media/empty"
+    .pipe converter.input mime: 'image/jpeg'
 
-		converter.output mime: 'image/jpeg'
-		.pipe checkStream types
-		.on 'end', -> expect(@mimetype).to.not.exist
+    converter.output mime: 'image/jpeg'
+    .pipe checkStream types
+    .on 'end', -> expect(@mimetype).to.not.exist
 
-		converter.on 'error', -> setTimeout done, 10
+    converter.on 'error', -> setTimeout done, 10
 
-		converter.run()
+    converter.run()
