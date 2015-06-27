@@ -16,22 +16,18 @@ var ffmpeg = require('ffmpeg-stream').ffmpeg
 converter = ffmpeg()
 
 // get a writable input stream and pipe an image file to it
-input = converter.input({mime: 'image/jpeg'});
+input = converter.input({f: 'image2pipe', vcodec: 'mjpeg'});
 fs.createReadStream(__dirname + '/cat.jpg').pipe(input)
 
-// create an output stream, crop image, save to file
+// create an output stream, crop/scale image, save to file via node stream
 converter.output({
-  mime: 'image/jpeg',
-  vf: 'crop=300:300',
-})
-.pipe(fs.createWriteStream(__dirname + '/cat_full.jpg'))
-
-// same, but also resize image
-converter.output({
-  mime: 'image/jpeg',
+  f: 'image2', vcodec: 'mjpeg',
   vf: 'crop=300:300,scale=100:100',
 })
 .pipe(fs.createWriteStream(__dirname + '/cat_thumb.jpg'))
+
+// same, but save to file directly from ffmpeg
+converter.output(__dirname + '/cat_full.jpg', {vf: 'crop=300:300'})
 
 // start processing
 converter.run()
@@ -44,31 +40,25 @@ Example runnable scripts are in `examples/` directory.
 ## Class `ffmpeg()`
 
 Creates and returns a new instance of the ffmpeg converter class.
-Converting won't start until `converter.run()` is called.
+Converting won't start until `ffmpeg.run()` method is called.
 
-### method `ffmpeg.input(options)`
+### method `ffmpeg.input(path, options)`
 
 Defines an input.
-Returns a writable stream.
-The `options` argument takes an object of ffmpeg option/value pairs.
+`path` argument can be skipped or null - in such case a writable stream is returned.
+The `options` argument is an object of ffmpeg option/value pairs.
 
-Following extra options are available:
+Remember to specify format (`f` option) when using a stream as an input.
 
-- `mime` - MIME type of the input stream.
-  Passing this option sets the `f` option accordingly.
-  E.g. passing `image/jpeg` will add `-f mjpeg` to ffmpeg input options.
-
-### method `ffmpeg.output(options)`
+### method `ffmpeg.output(path, options)`
 
 Defines an output.
-Returns a readable stream.
-The `options` argument takes an object of ffmpeg option/value pairs.
+`path` argument can be skipped or null - in such case a readable stream is returned.
+The `options` argument is an object of ffmpeg option/value pairs.
 
-Following extra options are available:
+Remember to specify format (`f` option) when using a stream as an output.
 
-- `mime` - MIME type of the output stream.
-  Passing this option sets the `f` and `c:v`/`c:a` options accordingly.
-  For example passing `image/png` will add `-f image2 -c:v png` to ffmpeg output options.
+The stream returned will be closed before the converter exits.
 
 ### method `ffmpeg.run()`
 
@@ -77,6 +67,7 @@ Starts the processing.
 ### event `ffmpeg.on('finish', () => {…})`
 
 Emitted when the child ffmpeg process exits without error.
+This happens after the `end` event is fired on output streams.
 
 ### event `ffmpeg.on('error', (err) => {…})`
 

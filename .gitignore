@@ -1,5 +1,3 @@
 node_modules/
 npm-debug.log
-
-# output of example scripts
-examples/file_converter/cat_*
+*.out.*
