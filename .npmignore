@@ -1,4 +1,5 @@
 test/
-.jshintrc
+src/
+gulpfile.coffee
 .travis.yml
 *.out.*

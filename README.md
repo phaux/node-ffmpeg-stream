@@ -34,6 +34,7 @@ converter.run()
 ```
 
 Example runnable scripts are in `examples/` directory.
+Run them with `coffee` command (e.g. `coffee examples/file_converter`).
 
 # API
 
@@ -50,6 +51,9 @@ The `options` argument is an object of ffmpeg option/value pairs.
 
 Remember to specify format (`f` option) when using a stream as an input.
 
+A special option `buffer: true` can be specified to transparently use
+a temporary file instead of streaming directly to ffmpeg process.
+
 ### method `ffmpeg.output(path, options)`
 
 Defines an output.
@@ -58,21 +62,12 @@ The `options` argument is an object of ffmpeg option/value pairs.
 
 Remember to specify format (`f` option) when using a stream as an output.
 
-The stream returned will be closed before the converter exits.
+A special option `buffer: true` can be specified to transparently use
+a temporary file instead of streaming directly from ffmpeg process.
 
 ### method `ffmpeg.run()`
 
-Starts the processing.
-
-### event `ffmpeg.on('finish', () => {…})`
-
-Emitted when the child ffmpeg process exits without error.
-This happens after the `end` event is fired on output streams.
-
-### event `ffmpeg.on('error', (err) => {…})`
-
-Emitted when the child ffmpeg process exited with an error.
-The output streams are usually empty in this case.
+Starts the processing. Returns a Promise.
 
 # Todos
 

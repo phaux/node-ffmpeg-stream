@@ -1,13 +1,22 @@
 {ffmpeg} = require '../'
 {createReadStream} = require 'fs'
 {checkStream} = require 'is-mime'
-{expect} = require 'chai'
+mkdirp = require 'mkdirp'
+rimraf = require 'rimraf'
+{expect} = chai = require 'chai'
+chai.use require 'chai-as-promised'
 
 describe 'ffmpeg', ->
 
-  types = ['image/png', 'image/jpeg', 'image/gif']
+  types = ['image/png', 'image/jpeg', 'image/gif', 'video/webm']
 
-  it 'should do simple streamed conversion', (done) ->
+  beforeEach (done) ->
+    mkdirp "#{__dirname}/media/output", done
+
+  afterEach (done) ->
+    rimraf "#{__dirname}/media/output", done
+
+  it 'should do simple streamed conversion', ->
 
     converter = ffmpeg()
 
@@ -19,11 +28,40 @@ describe 'ffmpeg', ->
     .on 'end', ->
       expect @mimetype
       .to.equal 'image/png'
-      setTimeout done, 10
 
     converter.run()
 
-  it 'should do file to stream conversion', (done) ->
+  it 'should do simple buffered conversion', ->
+
+    converter = ffmpeg()
+
+    createReadStream "#{__dirname}/media/cat.jpg"
+    .pipe converter.input f: 'image2pipe', vcodec: 'mjpeg', buffer: true
+
+    converter.output f: 'image2', vcodec: 'png', buffer: true
+    .pipe checkStream types
+    .on 'end', ->
+      expect @mimetype
+      .to.equal 'image/png'
+
+    converter.run()
+
+  it 'should convert video', ->
+
+    converter = ffmpeg()
+
+    createReadStream "#{__dirname}/media/pug.gif"
+    .pipe converter.input f: 'gif', buffer: true
+
+    converter.output f: 'webm', buffer: true
+    .pipe checkStream types
+    .on 'end', ->
+      expect @mimetype
+      .to.equal 'video/webm'
+
+    converter.run()
+
+  it 'should do file to stream conversion', ->
 
     converter = ffmpeg()
 
@@ -34,25 +72,21 @@ describe 'ffmpeg', ->
     .on 'end', ->
       expect @mimetype
       .to.equal 'image/png'
-      setTimeout done, 10
 
     converter.run()
 
-  it 'should do stream to file conversion', (done) ->
+  it 'should do stream to file conversion', ->
 
     converter = ffmpeg()
 
     createReadStream "#{__dirname}/media/cat.jpg"
     .pipe converter.input f: 'image2pipe', vcodec: 'mjpeg'
 
-    converter.output "#{__dirname}/media/cat.out.png"
-
-    converter.on 'error', (err) -> done(err)
-    converter.on 'finish', -> done()
+    converter.output "#{__dirname}/media/output/cat.png"
 
     converter.run()
 
-  it 'should handle multiple stream outputs', (done) ->
+  it 'should handle multiple stream outputs', ->
 
     converter = ffmpeg()
 
@@ -72,11 +106,9 @@ describe 'ffmpeg', ->
     .pipe checkStream types
     .on 'end', -> expect(@mimetype).to.equal 'image/jpeg'
 
-    converter.on 'finish', -> setTimeout done, 10
-
     converter.run()
 
-  it 'should error on invalid input stream', (done) ->
+  it 'should error on invalid input stream', ->
 
     converter = ffmpeg()
 
@@ -87,6 +119,5 @@ describe 'ffmpeg', ->
     .pipe checkStream types
     .on 'end', -> expect(@mimetype).to.not.exist
 
-    converter.on 'error', -> setTimeout done, 10
-
-    converter.run()
+    expect converter.run()
+    .to.be.rejected
