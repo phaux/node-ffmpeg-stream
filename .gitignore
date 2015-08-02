@@ -1,4 +1,5 @@
 node_modules/
+lib/
 npm-debug.log
 *.out.*
 output/
