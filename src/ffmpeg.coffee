@@ -142,7 +142,7 @@ module.exports = class Ffmpeg
 
         @proc.on 'exit', (code, sig) =>
           debug "exit: code=#{code} sig=#{sig}"
-          unless code
+          if !code or code is 255
             ok()
           else
             @log.push @last # push the last line of logs
