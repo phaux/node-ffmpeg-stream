@@ -67,7 +67,12 @@ a temporary file instead of streaming directly from ffmpeg process.
 
 ### method `ffmpeg.run()`
 
-Starts the processing. Returns a Promise.
+Starts the processing. Returns a Promise which resolves on normal exit or kill,
+but rejects on ffmpeg error.
+
+### method `ffmpeg.kill()`
+
+Kills the ffmpeg process.
 
 # Todos
 

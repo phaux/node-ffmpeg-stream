@@ -125,3 +125,19 @@ describe 'ffmpeg', ->
 
     expect converter.run()
     .to.be.rejected
+
+  it 'should output empty stream on kill', ->
+
+    converter = ffmpeg()
+
+    createReadStream "#{__dirname}/media/cat.jpg"
+    .pipe converter.input f: 'image2pipe', vcodec: 'mjpeg'
+
+    converter.output f: 'image2', vcodec: 'png'
+    .pipe checkStream types
+    .on 'end', ->
+      expect @mimetype
+      .to.not.equal 'image/png'
+
+    converter.run()
+    converter.kill()

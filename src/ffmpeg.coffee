@@ -15,7 +15,9 @@ module.exports = class Ffmpeg
 
     @opts = if opts instanceof Object then opts else {}
 
+    @proc = null
     @started = false
+    @killed = false
 
     # inputs / outputs
     @io = []
@@ -41,17 +43,19 @@ module.exports = class Ffmpeg
 
   output: (file, opts) -> @addio 'out', file, opts
 
+  kill: ->
+    @killed = true
+    @proc.kill 'SIGINT' if @proc
+
   run: ->
 
     return P.reject new Error "Already started" if @started
     @started = true
+    @cmd = []
+    @stdio = ['ignore', 'ignore', 'pipe']
 
     P.resolve()
-    .bind
-      io: @io
-      cmd: []
-      stdio: ['ignore', 'ignore', 'pipe']
-    .then ->
+    .then =>
       p = @io
       .filter (io) -> io.mode is 'buffer'
       .map (io) ->
@@ -59,7 +63,7 @@ module.exports = class Ffmpeg
         .then (name) -> io.tmpfile = name
       P.all p
 
-    .then -> # build stdio arg
+    .then => # build stdio arg
       fd = 3
       @io
       .filter (io) -> io.mode is 'stdio'
@@ -67,7 +71,7 @@ module.exports = class Ffmpeg
         io.fd = fd++
         @stdio.push 'pipe'
 
-    .then -> # build command string
+    .then => # build command string
       mkcmd = (type) => (io) =>
         for o, v of io.opts
           unless v is false
@@ -85,7 +89,7 @@ module.exports = class Ffmpeg
       .filter (io) -> io.type is 'out'
       .forEach mkcmd 'out'
 
-    .then -> # consume all input buffered streams
+    .then => # consume all input buffered streams
       p = @io
       .filter (io) -> io.type is 'in' and io.mode is 'buffer'
       .map (io) -> new P (ok, fail) ->
@@ -98,7 +102,7 @@ module.exports = class Ffmpeg
           fail err
       P.all p
 
-    .then ->
+    .then =>
       new P (ok, fail) =>
         # buffer last line of output in case it was incomplete
         @last = ''
@@ -110,13 +114,15 @@ module.exports = class Ffmpeg
 
         debug "spawn: #{FF_PATH} #{@cmd.join ' '}"
 
-        proc = spawn FF_PATH, @cmd, stdio: @stdio
+        @proc = spawn FF_PATH, @cmd, stdio: @stdio
+
+        if @killed then setTimeout => @proc.kill 'SIGINT'
 
         # processing ffmpeg output
 
-        proc.stderr.setEncoding 'utf8'
+        @proc.stderr.setEncoding 'utf8'
 
-        proc.stderr.on 'data', (data) =>
+        @proc.stderr.on 'data', (data) =>
           buf = @last += data
           lines = buf.split /\r\n|\n|\r/
           @last = lines.pop() # save last line to buffer
@@ -130,13 +136,13 @@ module.exports = class Ffmpeg
               debug "log: #{line}"
               @log.push line
 
-        proc.on 'error', (err) ->
+        @proc.on 'error', (err) ->
           debug "error: #{err}"
           fail err
 
-        proc.on 'exit', (code, sig) =>
+        @proc.on 'exit', (code, sig) =>
           debug "exit: code=#{code} sig=#{sig}"
-          if code == 0
+          unless code
             ok()
           else
             @log.push @last # push the last line of logs
@@ -144,24 +150,24 @@ module.exports = class Ffmpeg
 
         @io
         .filter (io) -> io.mode is 'stdio'
-        .forEach (io) ->
+        .forEach (io) =>
 
-          proc.stdio[io.fd].on 'error', (err) ->
+          @proc.stdio[io.fd].on 'error', (err) ->
             debug "#{io.type}put stream #{io.fd} error: #{err}"
             #io.stream.emit 'error', err
 
           #if io.type is 'out'
-          proc.stdio[io.fd].on 'data', (data) ->
+          @proc.stdio[io.fd].on 'data', (data) ->
             debug "#{io.type}put stream #{io.fd} data: #{data.length} bytes"
 
-          proc.stdio[io.fd].on 'finish', ->
+          @proc.stdio[io.fd].on 'finish', ->
             debug "#{io.type}put stream #{io.fd} finish"
 
           switch io.type
-            when 'in'  then io.stream.pipe proc.stdio[io.fd]
-            when 'out' then proc.stdio[io.fd].pipe io.stream
+            when 'in'  then io.stream.pipe @proc.stdio[io.fd]
+            when 'out' then @proc.stdio[io.fd].pipe io.stream
 
-    .then -> # read all output buffered streams
+    .then => # read all output buffered streams
       p = @io
       .filter (io) -> io.type is 'out' and io.mode is 'buffer'
       .map (io) -> new P (ok, fail) ->
@@ -175,7 +181,7 @@ module.exports = class Ffmpeg
           fail err
       P.all p
 
-    .then -> # remove buffer files
+    .then => # remove buffer files
 
       p = @io
       .filter (io) -> io.mode is 'buffer'
