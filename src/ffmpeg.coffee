@@ -74,7 +74,7 @@ module.exports = class Ffmpeg
     .then => # build command string
       mkcmd = (type) => (io) =>
         for o, v of io.opts
-          unless v is false
+          unless not v? or v is false or v is ''
             @cmd.push "-#{o}"
             @cmd.push v unless v is true
         @cmd.push '-i' if type is 'in'
