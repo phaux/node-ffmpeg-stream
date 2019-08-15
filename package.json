@@ -21,6 +21,7 @@
     "test": "gulp"
   },
   "devDependencies": {
+    "@types/node": "^12.7.2",
     "chai": "^2.3.0",
     "chai-as-promised": "~5.1.0",
     "coffee-script": "~1.9.2",
