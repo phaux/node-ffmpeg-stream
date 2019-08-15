@@ -30,8 +30,6 @@
     "rimraf": "~2.4.2"
   },
   "dependencies": {
-    "debug": "^2.2.0",
-    "tmp": "0.0.26",
-    "bluebird": "~2.9.34"
+    "debug": "^2.2.0"
   }
 }
