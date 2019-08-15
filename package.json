@@ -1,33 +1,22 @@
 {
   "name": "ffmpeg-stream",
   "version": "0.5.0",
-  "description": "Stream-based media transcoding",
-  "main": "lib/index.js",
+  "description": "Node bindings to ffmpeg command, exposing stream based API",
+  "author": "phaux <phaux4@gmail.com>",
+  "repository": "phaux/node-ffmpeg-stream",
+  "license": "MIT",
+  "keywords": [
+    "ffmpeg",
+    "convert",
+    "transcode",
+    "media",
+    "video"
+  ],
+  "main": "lib",
   "scripts": {
     "test": "gulp",
     "prepublish": "gulp"
   },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/phaux/node-ffmpeg-stream.git"
-  },
-  "keywords": [
-    "ffmpeg",
-    "avconv",
-    "convert",
-    "transcode",
-    "media",
-    "audio",
-    "video",
-    "image",
-    "resize"
-  ],
-  "author": "phaux <phaux4@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/phaux/node-ffmpeg-stream/issues"
-  },
-  "homepage": "https://github.com/phaux/node-ffmpeg-stream",
   "devDependencies": {
     "chai": "^2.3.0",
     "coffee-script": "~1.9.2",
