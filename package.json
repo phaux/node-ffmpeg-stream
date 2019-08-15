@@ -12,6 +12,9 @@
     "media",
     "video"
   ],
+  "prettier": {
+    "semi": false
+  },
   "main": "lib",
   "scripts": {
     "prepare": "tsc",
@@ -27,6 +30,7 @@
     "gulp-util": "~3.0.6",
     "is-mime": "^0.3.0",
     "mkdirp": "~0.5.1",
+    "prettier": "^1.18.2",
     "rimraf": "~2.4.2",
     "typescript": "^3.5.3"
   },
