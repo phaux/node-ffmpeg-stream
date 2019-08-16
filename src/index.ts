@@ -15,59 +15,83 @@ async function getTmpPath(prefix = "", suffix = "") {
   return join(dir, `${prefix}${id}${suffix}`)
 }
 
-const FF_PATH = process.env.FFMPEG_PATH || "ffmpeg"
+const { FFMPEG_PATH = "ffmpeg" } = process.env
 
-export class ffmpeg {
-  opts = null
-  proc = null
-  started = false
-  killed = false
-  cmd = []
-  io = []
+type InputOpts = Record<string, string>
 
-  stdio
-  last = ""
-  log = []
-  section = 0
+type OutputOpts = Record<string, string>
 
-  constructor(opts = {}) {
-    this.opts = opts
-  }
+interface ExtraOpts {
+  /**
+   * When set to true, a temporary file will be used transparently,
+   * instead of piping to/from ffmpeg process directly.
+   * Useful when ffmpeg fails with particular format when streaming.
+   */
+  useTemporaryFile?: boolean
+}
 
-  addio(type, file, opts) {
-    let stream
-    if (file instanceof Object) {
-      ;({ file, opts } = { file: null, opts: file })
-    }
-    if (!(opts instanceof Object)) {
-      opts = {}
-    }
-    const mode = (() => {
-      switch (false) {
-        case !file:
-          return "file"
-        case !!file || !opts.buffer:
-          return "buffer"
-        default:
-          return "stdio"
-      }
-    })()
-    if (mode !== "file") {
-      stream = new PassThrough()
-    }
-    delete opts.buffer
+// prettier-ignore
+type IO =
+  & (
+    | { type: "in"; opts: InputOpts }
+    | { type: "out"; opts: OutputOpts }
+  )
+  & (
+    | { mode: "file"; file: string }
+    | { mode: "buffer" | "stdio"; stream: PassThrough }
+  );
 
-    this.io.push({ type, mode, file, opts, stream })
+export class Converter {
+  private io: IO[] = []
+  private proc: any = null
+  private started = false
+  private killed = false
+  private cmd: any = []
+  private stdio: any
+  private last = ""
+  private log: any = []
+  private section = 0
 
+  createInputStream(inputOpts: InputOpts, miscOpts: ExtraOpts = {}) {
+    const stream = new PassThrough()
+    const mode = miscOpts.useTemporaryFile ? "buffer" : "stdio"
+    this.io.push({ type: "in", mode, opts: inputOpts, stream })
     return stream
   }
 
-  input(file, opts) {
-    return this.addio("in", file, opts)
+  createInputFromFile(file: string, opts: InputOpts) {
+    this.io.push({ type: "in", mode: "file", file, opts })
   }
 
-  output(file, opts) {
-    return this.addio("out", file, opts)
+  createOutputStream(outputOpts: OutputOpts, miscOpts: ExtraOpts = {}) {
+    const stream = new PassThrough()
+    const mode = miscOpts.useTemporaryFile ? "buffer" : "stdio"
+    this.io.push({ type: "out", mode, opts: outputOpts, stream })
+    return stream
+  }
+
+  createOutputToFile(file: string, opts: OutputOpts) {
+    this.io.push({ type: "out", mode: "file", file, opts })
+  }
+
+  /** @deprecated Use [[createInputStream]] or [[createInputFromFile]] */
+  input(arg0: any, arg1: any) {
+    const [file, opts] =
+      typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
+    if (file) return this.createInputFromFile(file, opts)
+    const buffer = opts.buffer
+    delete opts.buffer
+    return this.createInputStream(opts, buffer)
+  }
+
+  /** @deprecated Use [[createOutputStream]] or [[createOutputToFile]] */
+  output(arg0: any, arg1: any) {
+    const [file, opts] =
+      typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
+    if (file) return this.createOutputToFile(file, opts)
+    const buffer = opts.buffer
+    delete opts.buffer
+    return this.createOutputStream(opts, buffer)
   }
 
   kill() {
@@ -163,9 +187,9 @@ export class ffmpeg {
           // the parts where it just prints versions of codecs
           this.section = 0
 
-          debug(`spawn: ${FF_PATH} ${this.cmd.join(" ")}`)
+          debug(`spawn: ${FFMPEG_PATH} ${this.cmd.join(" ")}`)
 
-          this.proc = spawn(FF_PATH, this.cmd, { stdio: this.stdio })
+          this.proc = spawn(FFMPEG_PATH, this.cmd, { stdio: this.stdio })
 
           if (this.killed) {
             setTimeout(() => this.proc.kill("SIGINT"))
@@ -272,4 +296,9 @@ export class ffmpeg {
       })
       .then(function() {})
   }
+}
+
+/** @deprecated Construct [[Converter]] class directly */
+export function ffmpeg() {
+  return new Converter()
 }
