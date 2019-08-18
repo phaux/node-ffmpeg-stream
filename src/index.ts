@@ -1,16 +1,16 @@
-import { ChildProcess, spawn, StdioOptions } from "child_process"
+import { ChildProcess, spawn } from "child_process"
+import { debug } from "debug"
 import { createReadStream, createWriteStream, unlink } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import { PassThrough, Readable, Writable } from "stream"
 import { promisify } from "util"
-import { debug } from "debug"
 
 const dbg = debug("ffmpeg-stream")
 const { FFMPEG_PATH = "ffmpeg" } = process.env
 const EXIT_CODES = [0, 255]
 
-function debugStream(stream: Readable | Writable, name: string) {
+function debugStream(stream: Readable | Writable, name: string): void {
   stream.on("error", err => {
     dbg(`${name} error: ${err}`)
   })
@@ -22,7 +22,7 @@ function debugStream(stream: Readable | Writable, name: string) {
   })
 }
 
-function getTmpPath(prefix = "", suffix = "") {
+function getTmpPath(prefix = "", suffix = ""): string {
   const dir = tmpdir()
   const id = Math.random()
     .toString(32)
@@ -36,7 +36,7 @@ function getArgs(options: Options): string[] {
   const args: string[] = []
   for (const option in options) {
     const value = options[option]
-    if (value != null && value !== false) {
+    if (value != null && value != false) {
       args.push(`-${option}`)
       if (typeof value != "boolean") {
         args.push(String(value))
@@ -50,32 +50,28 @@ interface Pipe {
   readonly type: "input" | "output"
   readonly options: Options
   readonly file: string
-  onBegin?(): Promise<void>
-  onSpawn?(process: ChildProcess): void
-  onFinish?(): Promise<void>
+  onBegin?(this: void): Promise<void>
+  onSpawn?(this: void, process: ChildProcess): void
+  onFinish?(this: void): Promise<void>
 }
 
 /** @deprecated Construct [[Converter]] class directly */
-export function ffmpeg() {
+export function ffmpeg(): Converter {
   return new Converter()
 }
 
 export class Converter {
   private fdCount = 0
-  private pipes: Pipe[] = []
+  private readonly pipes: Pipe[] = []
   private process?: ChildProcess
 
-  private getUniqueFd() {
-    return this.fdCount++ + 3
-  }
-
   /** @deprecated Use [[createInputStream]] or [[createInputFromFile]] */
-  input(arg0: any, arg1: any) {
-    const [file, opts] =
+  input(arg0: string | Options, arg1?: Options): Writable | undefined {
+    const [file, opts = {}] =
       typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
     if (file != null) {
-      return this.createInputFromFile(file, opts)
+      return void this.createInputFromFile(file, opts)
     }
     if (opts.buffer) {
       delete opts.buffer
@@ -85,12 +81,12 @@ export class Converter {
   }
 
   /** @deprecated Use [[createOutputStream]] or [[createOutputToFile]] */
-  output(arg0: any, arg1: any) {
-    const [file, opts] =
+  output(arg0: string | Options, arg1?: Options): Readable | undefined {
+    const [file, opts = {}] =
       typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
     if (file != null) {
-      return this.createOutputToFile(file, opts)
+      return void this.createOutputToFile(file, opts)
     }
     if (opts.buffer) {
       delete opts.buffer
@@ -103,7 +99,7 @@ export class Converter {
     this.pipes.push({
       type: "input",
       options,
-      file
+      file,
     })
   }
 
@@ -111,7 +107,7 @@ export class Converter {
     this.pipes.push({
       type: "output",
       options,
-      file
+      file,
     })
   }
 
@@ -128,7 +124,7 @@ export class Converter {
         debugStream(stream, `input ${fd}`)
         if (!("write" in stdio)) throw Error(`input ${fd} is not writable`)
         stream.pipe(stdio)
-      }
+      },
     })
 
     return stream
@@ -146,7 +142,7 @@ export class Converter {
         if (stdio == null) throw Error(`output ${fd} is null`)
         debugStream(stdio, `output ${fd}`)
         stdio.pipe(stream)
-      }
+      },
     })
     return stream
   }
@@ -159,7 +155,7 @@ export class Converter {
       options,
       file,
       onBegin: async () => {
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve, reject): void => {
           const writer = createWriteStream(file)
           stream.pipe(writer)
           stream.on("end", () => {
@@ -174,12 +170,12 @@ export class Converter {
       },
       onFinish: async () => {
         await promisify(unlink)(file)
-      }
+      },
     })
     return stream
   }
 
-  createBufferedOutputStream(options: Options): Writable {
+  createBufferedOutputStream(options: Options): Readable {
     const stream = new PassThrough()
     const file = getTmpPath("ffmpeg-")
     this.pipes.push({
@@ -187,35 +183,74 @@ export class Converter {
       options,
       file,
       onFinish: async () => {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject): void => {
           const reader = createReadStream(file)
           reader.pipe(stream)
           reader.on("end", () => {
             dbg("output buffered stream end")
             resolve()
           })
-          return reader.on("error", err => {
+          reader.on("error", err => {
             dbg(`output buffered stream error: ${err}`)
             reject(err)
           })
         })
         await promisify(unlink)(file)
-      }
+      },
     })
     return stream
   }
 
-  private getStdioArg(): StdioOptions {
+  async run(): Promise<void> {
+    const pipes: Pipe[] = []
+    try {
+      for (const pipe of this.pipes) {
+        dbg(`prepare ${pipe.type}`)
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        if (pipe.onBegin != null) await pipe.onBegin()
+        pipes.push(pipe)
+      }
+
+      const command = this.getSpawnArgs()
+      const stdio = this.getStdioArg()
+      dbg(`spawn: ${FFMPEG_PATH} ${command.join(" ")}`)
+      dbg(`spawn stdio: ${stdio.join(" ")}`)
+      this.process = spawn(FFMPEG_PATH, command, { stdio })
+      const finished = this.handleProcess()
+
+      for (const pipe of this.pipes) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        if (pipe.onSpawn != null) pipe.onSpawn(this.process)
+      }
+
+      await finished
+    } finally {
+      for (const pipe of pipes) {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        if (pipe.onFinish != null) await pipe.onFinish()
+      }
+    }
+  }
+
+  kill(): void {
+    if (this.process == null) throw Error(`Converter not started`)
+    this.process.kill()
+  }
+
+  private getUniqueFd(): number {
+    return this.fdCount++ + 3
+  }
+
+  private getStdioArg(): Array<"ignore" | "pipe"> {
     return [
       "ignore",
       "ignore",
       "pipe",
-      ...Array<"pipe">(this.fdCount).fill("pipe")
+      ...Array<"pipe">(this.fdCount).fill("pipe"),
     ]
   }
 
-  private getSpawnArgs() {
-    const stdio = this.getStdioArg()
+  private getSpawnArgs(): string[] {
     const command: string[] = []
 
     for (const pipe of this.pipes) {
@@ -229,38 +264,11 @@ export class Converter {
       command.push(pipe.file)
     }
 
-    return { command, stdio }
+    return command
   }
 
-  async run(): Promise<void> {
-    const pipes: Pipe[] = []
-    try {
-      for (const pipe of this.pipes) {
-        dbg(`prepare ${pipe.type}`)
-        if (pipe.onBegin != null) await pipe.onBegin()
-        pipes.push(pipe)
-      }
-
-      const { command, stdio } = this.getSpawnArgs()
-      dbg(`spawn: ${FFMPEG_PATH} ${command.join(" ")}`)
-      this.process = spawn(FFMPEG_PATH, command, { stdio })
-      const finished = this.handleProcess()
-
-      for (const pipe of this.pipes) {
-        if (pipe.onSpawn != null) pipe.onSpawn(this.process)
-      }
-
-      await finished
-    } finally {
-      for (const pipe of pipes) {
-        if (pipe.onFinish != null) await pipe.onFinish()
-      }
-    }
-  }
-
-  private async handleProcess() {
-    await new Promise<void>((resolve, reject) => {
-      let lastLogLine = ""
+  private async handleProcess(): Promise<void> {
+    await new Promise<void>((resolve, reject): void => {
       let logSectionNum = 0
       const logLines: string[] = []
 
@@ -270,19 +278,14 @@ export class Converter {
         this.process.stderr.setEncoding("utf8")
 
         this.process.stderr.on("data", data => {
-          // include last line from previous event
-          const buffer = (lastLogLine += data)
-          const lines = buffer.split(/\r\n|\r|\n/)
-          // save last line because it might be unfinished
-          lastLogLine = lines.pop()!
-
+          const lines = data.split(/\r\n|\r|\n/u)
           for (const line of lines) {
             // skip empty lines
-            if (line.match(/^\s*$/)) continue
+            if (/^\s*$/u.exec(line) != null) continue
             // if not indented: increment section counter
-            if (!line.match(/^ /)) logSectionNum++
+            if (/^\s/u.exec(line) == null) logSectionNum++
             // only log sections following the first one
-            if (logSectionNum >= 2) {
+            if (logSectionNum > 1) {
               dbg(`log: ${line}`)
               logLines.push(line)
             }
@@ -299,16 +302,9 @@ export class Converter {
         dbg(`exit: code=${code} sig=${signal}`)
         if (code == null) return resolve()
         if (EXIT_CODES.includes(code)) return resolve()
-        const log = [...logLines, lastLogLine]
-          .map(line => `  ${line}`)
-          .join("\n")
+        const log = logLines.map(line => `  ${line}`).join("\n")
         reject(Error(`Converting failed\n${log}`))
       })
     })
-  }
-
-  kill() {
-    if (this.process == null) throw Error(`Converter not started`)
-    this.process.kill()
   }
 }
