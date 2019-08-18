@@ -1,0 +1,33 @@
+{
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier",
+    "prettier/@typescript-eslint"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "@typescript-eslint/member-ordering": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/prefer-readonly": "error",
+    "@typescript-eslint/restrict-plus-operands": "error",
+    "func-style": ["error", "declaration"],
+    "id-length": "error",
+    "no-else-return": "error",
+    "no-implicit-coercion": "error",
+    "no-nested-ternary": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "require-unicode-regexp": "error",
+    "yoda": "error"
+  }
+}
