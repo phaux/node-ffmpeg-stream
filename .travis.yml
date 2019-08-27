@@ -1,8 +1,16 @@
 language: node_js
+
 node_js:
-- stable
-env: DEBUG=ffmpeg-stream
+  - stable
+
+after_success:
+  - npx codecov
+
+env:
+  - DEBUG=ffmpeg-stream
+
 addons:
   apt:
+    update: true
     packages:
-    - ffmpeg
+      - ffmpeg
