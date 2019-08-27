@@ -1,5 +1,2 @@
-test/
-src/
-gulpfile.coffee
-.travis.yml
-*.out.*
+/__tests__/
+/coverage/

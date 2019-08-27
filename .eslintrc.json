@@ -12,6 +12,7 @@
     "prettier/@typescript-eslint"
   ],
   "parserOptions": {
+    "createDefaultProgram": true,
     "project": "./tsconfig.json"
   },
   "rules": {

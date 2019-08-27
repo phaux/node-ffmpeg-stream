@@ -66,7 +66,9 @@ export class Converter {
   private process?: ChildProcess
 
   /** @deprecated Use [[createInputStream]] or [[createInputFromFile]] */
-  input(arg0: string | Options, arg1?: Options): Writable | undefined {
+  input(options?: Options): Writable
+  input(file: string, options?: Options): void
+  input(arg0?: string | Options, arg1?: Options): Writable | undefined {
     const [file, opts = {}] =
       typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
@@ -81,7 +83,9 @@ export class Converter {
   }
 
   /** @deprecated Use [[createOutputStream]] or [[createOutputToFile]] */
-  output(arg0: string | Options, arg1?: Options): Readable | undefined {
+  output(options?: Options): Readable
+  output(file: string, options?: Options): void
+  output(arg0?: string | Options, arg1?: Options): Readable | undefined {
     const [file, opts = {}] =
       typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
