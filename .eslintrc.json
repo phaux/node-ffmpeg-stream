@@ -1,0 +1,42 @@
+{
+  "env": {
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier",
+    "prettier/@typescript-eslint"
+  ],
+  "parserOptions": {
+    "createDefaultProgram": true,
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/member-ordering": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/prefer-readonly": "error",
+    "@typescript-eslint/promise-function-async": "error",
+    "@typescript-eslint/restrict-plus-operands": "error",
+    "@typescript-eslint/strict-boolean-expressions": [
+      "error",
+      { "ignoreRhs": true }
+    ],
+    "eqeqeq": ["error", "smart"],
+    "func-style": ["error", "declaration"],
+    "id-length": "error",
+    "no-else-return": "error",
+    "no-extra-boolean-cast": "off",
+    "no-implicit-coercion": "error",
+    "no-nested-ternary": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "require-unicode-regexp": "error",
+    "yoda": "error"
+  }
+}
