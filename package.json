@@ -1,6 +1,6 @@
 {
   "name": "ffmpeg-stream",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Node bindings to ffmpeg command, exposing stream based API",
   "author": "phaux <phaux4@gmail.com>",
   "repository": "phaux/node-ffmpeg-stream",
