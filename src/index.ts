@@ -36,7 +36,7 @@ function getArgs(options: Options): string[] {
   const args: string[] = []
   for (const option in options) {
     const value = options[option]
-    if (value != null && value != false) {
+    if (value != null && value !== false) {
       args.push(`-${option}`)
       if (typeof value != "boolean") {
         args.push(String(value))
@@ -75,7 +75,7 @@ export class Converter {
     if (file != null) {
       return void this.createInputFromFile(file, opts)
     }
-    if (opts.buffer) {
+    if (Boolean(opts.buffer)) {
       delete opts.buffer
       return this.createBufferedInputStream(opts)
     }
@@ -92,7 +92,7 @@ export class Converter {
     if (file != null) {
       return void this.createOutputToFile(file, opts)
     }
-    if (opts.buffer) {
+    if (Boolean(opts.buffer)) {
       delete opts.buffer
       return this.createBufferedOutputStream(opts)
     }
@@ -258,12 +258,12 @@ export class Converter {
     const command: string[] = []
 
     for (const pipe of this.pipes) {
-      if (pipe.type != "input") continue
+      if (pipe.type !== "input") continue
       command.push(...getArgs(pipe.options))
       command.push("-i", pipe.file)
     }
     for (const pipe of this.pipes) {
-      if (pipe.type != "output") continue
+      if (pipe.type !== "output") continue
       command.push(...getArgs(pipe.options))
       command.push(pipe.file)
     }
