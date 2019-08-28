@@ -6,6 +6,8 @@
 
 Node bindings to ffmpeg command, exposing stream based API.
 
+[CHANGELOG](CHANGELOG.md)
+
 ## Examples
 
 ```js
