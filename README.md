@@ -46,7 +46,7 @@ async function convert() {
 - **class** `Converter`
 
   Creates a new instance of the ffmpeg converter class.
-  Converting won't start until `ffmpeg.run()` method is called.
+  Converting won't start until `run()` method is called.
 
   - **method** `createInputStream(options: Options): stream.Writable`
 
@@ -112,11 +112,12 @@ async function convert() {
 - **type** `Options`
 
   Object of options which you normally pass to the ffmpeg command in the terminal.
+  Documentation for individual options can be found at [ffmpeg site](https://ffmpeg.org/ffmpeg.html) in audio and video category.
   For boolean options specify `true` or `false`.
 
 # FAQ
 
-## Get video duration and other stats.
+## How to get video duration and other stats?
 
 You can use `ffprobe` command for now. It might be implemented in the library in the future, though.
 
@@ -145,7 +146,7 @@ ffmpeg says that the combination of options you specified doesn't support stream
 
 You can also use `createBufferedOutputStream`. That tells the library to save output to a temporary file and then create a node stream from that file. It wont start producing data until the conversion is complete, though.
 
-## Getting individual frame data
+## How to get individual frame data?
 
 You have to set output format to mjpeg and then split the stream manually by looking at the bytes. You can implement a transform stream which does this:
 
@@ -200,7 +201,7 @@ converter
   })
 ```
 
-## Creating video from multiple images
+## How to create an animation from a set of image files?
 
 > I have images in Amazon S3 bucket (private) so I'm using their SDK to download those.
 > I get the files in Buffer objects.
@@ -250,7 +251,7 @@ frames
 converter.run()
 ```
 
-## Stream video to an RTMP when there's data, otherwise an intermission image.
+## How to stream a video when there's data, otherwise an intermission image?
 
 You can turn your main stream into series of `jpeg` images with output format `mjpeg` and combine it with static image by repeatedly piping a single `jpeg` image when there's no data from main stream.
 Then pipe it to second ffmpeg process which combines `jpeg` images into video.
