@@ -21,6 +21,9 @@
     "test:tsc": "tsc --noEmit",
     "test:jest": "jest --coverage"
   },
+  "files": [
+    "lib"
+  ],
   "jest": {
     "preset": "ts-jest"
   },
