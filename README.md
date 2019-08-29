@@ -31,7 +31,7 @@ async function convert() {
       vcodec: "mjpeg",
       vf: "crop=300:300,scale=100:100",
     })
-    .pipe(createWriteStream(__dirname + "/cat_thumb.jpg"))
+    .pipe(createWriteStream(`${__dirname}/cat_thumb.jpg`))
 
   // same, but save to file directly from ffmpeg
   converter.createOutputToFile(`${__dirname}/cat_full.jpg`, {
