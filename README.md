@@ -1,8 +1,8 @@
 # FFmpeg-Stream
 
-![Travis](https://img.shields.io/travis/phaux/node-ffmpeg-stream)
-![Codecov](https://img.shields.io/codecov/c/gh/phaux/node-ffmpeg-stream)
-![npm](https://img.shields.io/npm/v/ffmpeg-stream)
+[![Travis](https://img.shields.io/travis/phaux/node-ffmpeg-stream)](https://travis-ci.org/phaux/node-ffmpeg-stream)
+[![Codecov](https://img.shields.io/codecov/c/gh/phaux/node-ffmpeg-stream)](https://codecov.io/gh/phaux/node-ffmpeg-stream)
+[![npm](https://img.shields.io/npm/v/ffmpeg-stream)](https://www.npmjs.com/package/ffmpeg-stream)
 
 Node bindings to ffmpeg command, exposing stream based API.
 
