@@ -30,6 +30,11 @@
     "eqeqeq": ["error", "smart"],
     "func-style": ["error", "declaration"],
     "id-length": "error",
+    "lines-between-class-members": [
+      "warn",
+      "always",
+      { "exceptAfterSingleLine": true }
+    ],
     "no-else-return": "error",
     "no-extra-boolean-cast": "off",
     "no-implicit-coercion": "error",
