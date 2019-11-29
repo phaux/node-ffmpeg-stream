@@ -210,7 +210,6 @@ export class Converter {
     try {
       for (const pipe of this.pipes) {
         dbg(`prepare ${pipe.type}`)
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (pipe.onBegin != null) await pipe.onBegin()
         pipes.push(pipe)
       }
@@ -223,14 +222,12 @@ export class Converter {
       const finished = this.handleProcess()
 
       for (const pipe of this.pipes) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (pipe.onSpawn != null) pipe.onSpawn(this.process)
       }
 
       await finished
     } finally {
       for (const pipe of pipes) {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         if (pipe.onFinish != null) await pipe.onFinish()
       }
     }
