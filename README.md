@@ -116,6 +116,7 @@ async function convert() {
   Object of options which you normally pass to the ffmpeg command in the terminal.
   Documentation for individual options can be found at [ffmpeg site](https://ffmpeg.org/ffmpeg.html) in audio and video category.
   For boolean options specify `true` or `false`.
+  If you'd like to specify the same argument multiple times you can do so by providing an array of values. E.g. `{ map: ["0:v", "1:a"] }`
 
 # FAQ
 

@@ -30,13 +30,20 @@ function getTmpPath(prefix = "", suffix = ""): string {
   return join(dir, `${prefix}${id}${suffix}`)
 }
 
-type Options = Record<string, string | number | boolean | null | undefined>
+type Options = Record<string, string | number | boolean | Array<string | null | undefined> | null | undefined>
 
 function getArgs(options: Options): string[] {
   const args: string[] = []
   for (const option in options) {
     const value = options[option]
-    if (value != null && value !== false) {
+    if (Array.isArray(value)) {
+      for (const element of value) {
+        if (element != null) {
+          args.push(`-${option}`)
+          args.push(String(element))
+        }
+      }
+    } else if (value != null && value !== false) {
       args.push(`-${option}`)
       if (typeof value != "boolean") {
         args.push(String(value))
