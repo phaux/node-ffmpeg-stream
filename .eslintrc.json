@@ -15,16 +15,13 @@
     "project": "./tsconfig.json"
   },
   "rules": {
-    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/member-ordering": "error",
-    "@typescript-eslint/no-floating-promises": "error",
-    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/method-signature-style": "error",
     "@typescript-eslint/prefer-readonly": "error",
     "@typescript-eslint/promise-function-async": "error",
-    "@typescript-eslint/restrict-plus-operands": "error",
     "@typescript-eslint/strict-boolean-expressions": "error",
     "eqeqeq": ["error", "smart"],
-    "func-style": ["error", "declaration"],
     "id-length": "error",
     "no-else-return": "error",
     "no-extra-boolean-cast": "off",

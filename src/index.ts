@@ -1,9 +1,11 @@
-import { ChildProcess, spawn } from "child_process"
+import type { ChildProcess } from "child_process"
+import { spawn } from "child_process"
 import { debug } from "debug"
 import { createReadStream, createWriteStream, unlink } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
-import { PassThrough, Readable, Writable } from "stream"
+import type { Readable, Writable } from "stream"
+import { PassThrough } from "stream"
 import { promisify } from "util"
 
 const dbg = debug("ffmpeg-stream")
@@ -12,9 +14,9 @@ const EXIT_CODES = [0, 255]
 
 function debugStream(stream: Readable | Writable, name: string): void {
   stream.on("error", err => {
-    dbg(`${name} error: ${err}`)
+    dbg(`${name} error: ${err.message}`)
   })
-  stream.on("data", data => {
+  stream.on("data", (data: string | Buffer) => {
     dbg(`${name} data: ${data.length} bytes`)
   })
   stream.on("finish", () => {
@@ -24,13 +26,14 @@ function debugStream(stream: Readable | Writable, name: string): void {
 
 function getTmpPath(prefix = "", suffix = ""): string {
   const dir = tmpdir()
-  const id = Math.random()
-    .toString(32)
-    .substr(2, 10)
+  const id = Math.random().toString(32).substr(2, 10)
   return join(dir, `${prefix}${id}${suffix}`)
 }
 
-type Options = Record<string, string | number | boolean | Array<string | null | undefined> | null | undefined>
+type Options = Record<
+  string,
+  string | number | boolean | Array<string | null | undefined> | null | undefined
+>
 
 function getArgs(options: Options): string[] {
   const args: string[] = []
@@ -57,9 +60,9 @@ interface Pipe {
   readonly type: "input" | "output"
   readonly options: Options
   readonly file: string
-  onBegin?(this: void): Promise<void>
-  onSpawn?(this: void, process: ChildProcess): void
-  onFinish?(this: void): Promise<void>
+  onBegin?: (this: void) => Promise<void>
+  onSpawn?: (this: void, process: ChildProcess) => void
+  onFinish?: (this: void) => Promise<void>
 }
 
 /** @deprecated Construct [[Converter]] class directly */
@@ -71,13 +74,13 @@ export class Converter {
   private fdCount = 0
   private readonly pipes: Pipe[] = []
   private process?: ChildProcess
+  private killed = false
 
   /** @deprecated Use [[createInputStream]] or [[createInputFromFile]] */
   input(options?: Options): Writable
   input(file: string, options?: Options): void
   input(arg0?: string | Options, arg1?: Options): Writable | undefined {
-    const [file, opts = {}] =
-      typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
+    const [file, opts = {}] = typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
     if (file != null) {
       return void this.createInputFromFile(file, opts)
@@ -93,8 +96,7 @@ export class Converter {
   output(options?: Options): Readable
   output(file: string, options?: Options): void
   output(arg0?: string | Options, arg1?: Options): Readable | undefined {
-    const [file, opts = {}] =
-      typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
+    const [file, opts = {}] = typeof arg0 == "string" ? [arg0, arg1] : [undefined, arg0]
 
     if (file != null) {
       return void this.createOutputToFile(file, opts)
@@ -174,7 +176,7 @@ export class Converter {
             resolve()
           })
           stream.on("error", err => {
-            dbg(`input buffered stream error: ${err}`)
+            dbg(`input buffered stream error: ${err.message}`)
             return reject(err)
           })
         })
@@ -201,8 +203,8 @@ export class Converter {
             dbg("output buffered stream end")
             resolve()
           })
-          reader.on("error", err => {
-            dbg(`output buffered stream error: ${err}`)
+          reader.on("error", (err: Error) => {
+            dbg(`output buffered stream error: ${err.message}`)
             reject(err)
           })
         })
@@ -217,7 +219,7 @@ export class Converter {
     try {
       for (const pipe of this.pipes) {
         dbg(`prepare ${pipe.type}`)
-        if (pipe.onBegin != null) await pipe.onBegin()
+        await pipe.onBegin?.()
         pipes.push(pipe)
       }
 
@@ -229,20 +231,27 @@ export class Converter {
       const finished = this.handleProcess()
 
       for (const pipe of this.pipes) {
-        if (pipe.onSpawn != null) pipe.onSpawn(this.process)
+        pipe.onSpawn?.(this.process)
+      }
+
+      if (this.killed) {
+        // the converter was already killed so stop it immediately
+        this.process.kill()
       }
 
       await finished
     } finally {
       for (const pipe of pipes) {
-        if (pipe.onFinish != null) await pipe.onFinish()
+        await pipe.onFinish?.()
       }
     }
   }
 
   kill(): void {
-    if (this.process == null) throw Error(`Converter not started`)
-    this.process.kill()
+    // kill the process if it already started
+    this.process?.kill()
+    // set the flag so it will be killed after it's initialized
+    this.killed = true
   }
 
   private getUniqueFd(): number {
@@ -250,12 +259,7 @@ export class Converter {
   }
 
   private getStdioArg(): Array<"ignore" | "pipe"> {
-    return [
-      "ignore",
-      "ignore",
-      "pipe",
-      ...Array<"pipe">(this.fdCount).fill("pipe"),
-    ]
+    return ["ignore", "ignore", "pipe", ...Array<"pipe">(this.fdCount).fill("pipe")]
   }
 
   private getSpawnArgs(): string[] {
@@ -285,7 +289,7 @@ export class Converter {
       if (this.process.stderr != null) {
         this.process.stderr.setEncoding("utf8")
 
-        this.process.stderr.on("data", data => {
+        this.process.stderr.on("data", (data: string) => {
           const lines = data.split(/\r\n|\r|\n/u)
           for (const line of lines) {
             // skip empty lines
@@ -302,12 +306,12 @@ export class Converter {
       }
 
       this.process.on("error", err => {
-        dbg(`error: ${err}`)
+        dbg(`error: ${err.message}`)
         return reject(err)
       })
 
       this.process.on("exit", (code, signal) => {
-        dbg(`exit: code=${code} sig=${signal}`)
+        dbg(`exit: code=${code ?? "unknown"} sig=${signal ?? "unknown"}`)
         if (code == null) return resolve()
         if (EXIT_CODES.includes(code)) return resolve()
         const log = logLines.map(line => `  ${line}`).join("\n")

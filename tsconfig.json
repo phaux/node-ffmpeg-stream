@@ -2,11 +2,11 @@
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
-    "lib": ["esnext"],
-    "module": "commonjs",
+    "lib": ["ES2020"],
+    "module": "CommonJS",
     "outDir": "lib",
     "strict": true,
-    "target": "esnext"
+    "target": "ES2018"
   },
-  "include": ["src", "types"]
+  "include": ["src", "types", "__tests__"]
 }
