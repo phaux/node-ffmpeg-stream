@@ -8,6 +8,8 @@ Node bindings to ffmpeg command, exposing stream based API.
 
 [CHANGELOG](CHANGELOG.md)
 
+**Note:** ffmpeg must be installed and available in PATH.
+
 ## Examples
 
 ```js
@@ -120,11 +122,11 @@ async function convert() {
 
 # FAQ
 
-## How to get video duration and other stats?
+## How to get video duration and other stats
 
 You can use `ffprobe` command for now. It might be implemented in the library in the future, though.
 
-## Is there a `progress` or `onFrameEmitted` event?
+## Is there a `progress` or `onFrameEmitted` event
 
 Currently, no.
 
@@ -149,7 +151,7 @@ ffmpeg says that the combination of options you specified doesn't support stream
 
 You can also use `createBufferedOutputStream`. That tells the library to save output to a temporary file and then create a node stream from that file. It wont start producing data until the conversion is complete, though.
 
-## How to get individual frame data?
+## How to get individual frame data
 
 You have to set output format to mjpeg and then split the stream manually by looking at the bytes. You can implement a transform stream which does this:
 
@@ -169,10 +171,7 @@ class ExtractFrames extends Transform {
     while (true) {
       const start = this.buffer.indexOf(this.delimiter)
       if (start < 0) break // there's no frame data at all
-      const end = this.buffer.indexOf(
-        this.delimiter,
-        start + this.delimiter.length,
-      )
+      const end = this.buffer.indexOf(this.delimiter, start + this.delimiter.length)
       if (end < 0) break // we haven't got the whole frame yet
       this.push(this.buffer.slice(start, end)) // emit a frame
       this.buffer = this.buffer.slice(end) // remove frame data from buffer
@@ -204,7 +203,7 @@ converter
   })
 ```
 
-## How to create an animation from a set of image files?
+## How to create an animation from a set of image files
 
 > I have images in Amazon S3 bucket (private) so I'm using their SDK to download those.
 > I get the files in Buffer objects.
@@ -240,11 +239,8 @@ frames
         .on("end", resolve)
         .on("error", reject)
         // pipe to converter, but don't end the input yet
-        .pipe(
-          input,
-          { end: false },
-        ),
-    ),
+        .pipe(input, { end: false })
+    )
   )
   // reduce into a single promise, run sequentially
   .reduce((prev, next) => prev.then(next), Promise.resolve())
@@ -254,7 +250,7 @@ frames
 converter.run()
 ```
 
-## How to stream a video when there's data, otherwise an intermission image?
+## How to stream a video when there's data, otherwise an intermission image
 
 You can turn your main stream into series of `jpeg` images with output format `mjpeg` and combine it with static image by repeatedly piping a single `jpeg` image when there's no data from main stream.
 Then pipe it to second ffmpeg process which combines `jpeg` images into video.
@@ -281,10 +277,7 @@ function streamVideo(stream) {
   stream.pipe(split.createInputStream({ f: "webm" }))
 
   // get jpegs and pipe them to combining process
-  split.createOutputStream({ f: "mjpeg" }).pipe(
-    combineInput,
-    { end: false },
-  )
+  split.createOutputStream({ f: "mjpeg" }).pipe(combineInput, { end: false })
 
   stream.on("end", () => {
     // video stream ended
@@ -300,16 +293,11 @@ setInterval(() => {
 
   // pipe a single jpeg file 30 times per second
   // into the combining process
-  fs.createReadStream("intermission_pic.jpg").pipe(
-    combineInput,
-    { end: false },
-  )
+  fs.createReadStream("intermission_pic.jpg").pipe(combineInput, { end: false })
 }, 1000 / 30)
 
 // the final output
-combine
-  .createOutputStream({ f: "whatever format you want" })
-  .pipe(/* wherever you want */)
+combine.createOutputStream({ f: "whatever format you want" }).pipe(/* wherever you want */)
 
 combine.run()
 ```

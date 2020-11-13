@@ -12,9 +12,10 @@
     "media",
     "video"
   ],
-  "main": "lib",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "prepare": "tsc",
+    "prepare": "tsc -p tsconfig.build.json --declaration --outDir lib/",
     "test": "run-s test:*",
     "test:eslint": "eslint --ext js,ts .",
     "test:prettier": "prettier --check \"**/*.{js,ts,json}\"",
@@ -34,7 +35,7 @@
     }
   },
   "lint-staged": {
-    "*.{js,ts,json}": [
+    "*.{js,ts,json,md}": [
       "prettier --write"
     ],
     "*.{js,ts}": [

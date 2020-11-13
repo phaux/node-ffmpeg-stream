@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { createReadStream } from "fs"
 import { checkStream } from "is-mime"
 import mkdirp from "mkdirp"
@@ -131,9 +133,7 @@ test("should output empty stream on kill", done => {
   expect.assertions(1)
   const converter = ffmpeg()
 
-  createReadStream(`${__dirname}/media/cat.jpg`).pipe(
-    converter.input({ f: "image2pipe", vcodec: "mjpeg" })
-  )
+  converter.input(`${__dirname}/media/cat.jpg`)
 
   converter
     .output({ f: "image2", vcodec: "png" })
@@ -143,6 +143,6 @@ test("should output empty stream on kill", done => {
       done()
     })
 
-  converter.run()
+  void converter.run()
   converter.kill()
 })

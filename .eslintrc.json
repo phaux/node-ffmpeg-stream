@@ -22,7 +22,6 @@
     "@typescript-eslint/promise-function-async": "error",
     "@typescript-eslint/strict-boolean-expressions": "error",
     "eqeqeq": ["error", "smart"],
-    "id-length": "error",
     "no-else-return": "error",
     "no-extra-boolean-cast": "off",
     "no-implicit-coercion": "error",

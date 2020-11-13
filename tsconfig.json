@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "declaration": true,
     "esModuleInterop": true,
     "lib": ["ES2020"],
     "module": "CommonJS",
-    "outDir": "lib",
+    "moduleResolution": "Node",
     "strict": true,
     "target": "ES2018"
-  },
-  "include": ["src", "types", "__tests__"]
+  }
 }
