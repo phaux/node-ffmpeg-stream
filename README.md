@@ -87,22 +87,6 @@ async function convert() {
     then it returns a readable stream attached to that file.
     Using this method will cause a huge delay.
 
-  - **method** `input(file?: string, options: Options): stream.Writable | undefined`
-
-    _DEPRECATED!_ Use one of 3 input methods above.
-
-    This is the same as `createInputFromFile` when the file is specified,
-    and `createInputStream` when it isn't,
-    or `createBufferedInputStream` when also a magic option `buffer` is set to `true`.
-
-  - **method** `output(file?: string, options: Options): stream.Readable | undefined`
-
-    _DEPRECATED!_ Use one of the 3 output methods above.
-
-    This is the same as `createOutputFromFile` when the file is specified,
-    and `createOutputStream` when it isn't,
-    or `createBufferedOutputStream` when also a magic option `buffer` is set to `true`.
-
   - **method** `run(): Promise<void>`
 
     Starts the ffmpeg process.
