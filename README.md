@@ -20,20 +20,19 @@ async function convert() {
   const converter = new Converter()
 
   // get a writable input stream and pipe an image file to it
-  const input = converter.createInputStream({
+  const converterInput = converter.createInputStream({
     f: "image2pipe",
     vcodec: "mjpeg",
   })
-  createReadStream(`${__dirname}/cat.jpg`).pipe(input)
+  createReadStream(`${__dirname}/cat.jpg`).pipe(converterInput)
 
   // create an output stream, crop/scale image, save to file via node stream
-  converter
-    .createOutputStream({
-      f: "image2",
-      vcodec: "mjpeg",
-      vf: "crop=300:300,scale=100:100",
-    })
-    .pipe(createWriteStream(`${__dirname}/cat_thumb.jpg`))
+  const converterOutput = converter.createOutputStream({
+    f: "image2",
+    vcodec: "mjpeg",
+    vf: "crop=300:300,scale=100:100",
+  })
+  converterOutput.pipe(createWriteStream(`${__dirname}/cat_thumb.jpg`))
 
   // same, but save to file directly from ffmpeg
   converter.createOutputToFile(`${__dirname}/cat_full.jpg`, {
@@ -155,30 +154,43 @@ You can also use `createBufferedOutputStream`. That tells the library to save ou
 
 You have to set output format to mjpeg and then split the stream manually by looking at the bytes. You can implement a transform stream which does this:
 
-```js
+```ts
 const { Transform } = require("stream")
 
 class ExtractFrames extends Transform {
-  constructor(delimiter) {
+  constructor(magicNumberHex) {
     super({ readableObjectMode: true })
-    this.delimiter = Buffer.from(delimiter, "hex")
-    this.buffer = Buffer.alloc(0)
+    this.magicNumber = Buffer.from(magicNumberHex, "hex")
+    this.currentData = Buffer.alloc(0)
   }
 
-  _transform(data, enc, cb) {
-    // Add new data to buffer
-    this.buffer = Buffer.concat([this.buffer, data])
+  _transform(newData, encoding, done) {
+    // Add new data
+    this.currentData = Buffer.concat([this.currentData, newData])
+
+    // Find frames in current data
     while (true) {
-      const start = this.buffer.indexOf(this.delimiter)
-      if (start < 0) break // there's no frame data at all
-      const end = this.buffer.indexOf(this.delimiter, start + this.delimiter.length)
-      if (end < 0) break // we haven't got the whole frame yet
-      this.push(this.buffer.slice(start, end)) // emit a frame
-      this.buffer = this.buffer.slice(end) // remove frame data from buffer
-      if (start > 0) console.error(`Discarded ${start} bytes of invalid data`)
+      // Find the start of a frame
+      const startIndex = this.currentData.indexOf(this.magicNumber)
+      if (startIndex < 0) break // start of frame not found
+
+      // Find the start of the next frame
+      const endIndex = this.currentData.indexOf(
+        this.magicNumber,
+        startIndex + this.magicNumber.length
+      )
+      if (endIndex < 0) break // we haven't got the whole frame yet
+
+      // Handle found frame
+      this.push(this.currentData.slice(startIndex, endIndex)) // emit a frame
+      this.currentData = this.currentData.slice(endIndex) // remove frame data from current data
+      if (startIndex > 0) console.error(`Discarded ${startIndex} bytes of invalid data`)
     }
-    cb()
+
+    done()
   }
+
+  // TODO: Fix not emitting the last frame in a stream
 }
 ```
 
@@ -192,15 +204,11 @@ const converter = new Converter()
 converter
   .createOutputStream({ f: "image2pipe", vcodec: "mjpeg" })
   .pipe(new ExtractFrames("FFD8FF")) // use jpg magic number as delimiter
-  .on("data", frame => {
-    /* do things with frame (instance of Buffer) */
+  .on("data", frameData => {
+    /* do things with frame data (instance of Buffer) */
   })
-  .on("end", () => {
-    /* do things on complete */
-  })
-  .on("error", () => {
-    /* do things on error */
-  })
+
+converter.run()
 ```
 
 ## How to create an animation from a set of image files
@@ -219,35 +227,36 @@ const { Converter } = require("ffmpeg-stream")
 
 const frames = ["frame1.jpg", "frame2.jpg", ...etc]
 
-const converter = new Converter() // create converter
+// create converter
+const converter = new Converter()
 
-// create input writable stream
-const input = converter.createInputStream({ f: "image2pipe", r: 30 })
-// output to file
+// create input writable stream (the jpeg frames)
+const converterInput = converter.createInputStream({ f: "image2pipe", r: 30 })
+
+// create output to file (mp4 video)
 converter.createOutputToFile("out.mp4", {
   vcodec: "libx264",
   pix_fmt: "yuv420p",
 })
 
-// for every frame create a function that returns a promise
-frames
-  .map(filename => () =>
-    new Promise((resolve, reject) =>
-      s3
-        .getObject({ Bucket: "...", Key: filename })
-        .createReadStream()
-        .on("end", resolve)
-        .on("error", reject)
-        // pipe to converter, but don't end the input yet
-        .pipe(input, { end: false })
-    )
-  )
-  // reduce into a single promise, run sequentially
-  .reduce((prev, next) => prev.then(next), Promise.resolve())
-  // end converter input
-  .then(() => input.end())
+// start the converter, save the promise for later
+const convertingFinished = converter.run()
 
-converter.run()
+// pipe all the frames to the converter sequentially
+for (const filename of frames) {
+  // create a promise for every frame and await it
+  await new Promise((resolve, reject) => {
+    s3.getObject({ Bucket: "...", Key: filename })
+      .createReadStream()
+      .pipe(converterInput, { end: false }) // pipe to converter, but don't end the input yet
+      .on("end", resolve) // resolve the promise after the frame finishes
+      .on("error", reject)
+  })
+}
+converterInput.end()
+
+// await until the whole process finished just in case
+await convertingFinished
 ```
 
 ## How to stream a video when there's data, otherwise an intermission image
@@ -259,45 +268,51 @@ Then pipe it to second ffmpeg process which combines `jpeg` images into video.
 const fs = require("fs")
 const { Converter } = require("ffmpeg-stream")
 
-// the combining ffmpeg process
-const combine = new Converter()
-const combineInput = combine.createInputStream({ f: "mjpeg" })
+// create the joiner ffmpeg process (frames to video)
+const joiner = new Converter()
+const joinerInput = joiner.createInputStream({ f: "mjpeg" })
+const joinerOutput = joiner.createOutputStream({ f: "whatever format you want" })
+joinerOutput.pipe(/* wherever you want */)
+
+joiner.run()
 
 // remember if we are streaming currently
 let streaming = false
 
-// argument should be a WebM video stream
-function streamVideo(stream) {
+/**
+ * A function which streams a single video.
+ *
+ * @param {stream.Readable} incomingStream - The video stream.
+ * @param {string} format - The format of the video stream.
+ *
+ * @returns {Promise<void>} Promise which resolves when the stream ends.
+ */
+async function streamVideo(incomingStream, format) {
+  if (streaming) throw new Error("We are already streaming something else")
   streaming = true
 
-  // the splitting ffmpeg process
-  const split = new Converter()
+  // create the splitter ffmpeg process (video to frames)
+  const splitter = new Converter()
 
-  // pipe video to splitting process
-  stream.pipe(split.createInputStream({ f: "webm" }))
+  // pipe video to splitter process
+  incomingStream.pipe(splitter.createInputStream({ f: format }))
 
-  // get jpegs and pipe them to combining process
-  split.createOutputStream({ f: "mjpeg" }).pipe(combineInput, { end: false })
+  // get jpegs and pipe them to joiner process
+  splitter.createOutputStream({ f: "mjpeg" }).pipe(joinerInput, { end: false })
 
-  stream.on("end", () => {
-    // video stream ended
+  try {
+    await splitter.run()
+  } finally {
     streaming = false
-  })
-
-  split.run()
+  }
 }
 
 setInterval(() => {
   // if we are streaming - do nothing
   if (streaming) return
 
-  // pipe a single jpeg file 30 times per second
-  // into the combining process
-  fs.createReadStream("intermission_pic.jpg").pipe(combineInput, { end: false })
+  // pipe a single jpeg file 30 times per second into the joiner process
+  // TODO: don't actually read the file 30 times per second
+  fs.createReadStream("intermission_pic.jpg").pipe(joinerInput, { end: false })
 }, 1000 / 30)
-
-// the final output
-combine.createOutputStream({ f: "whatever format you want" }).pipe(/* wherever you want */)
-
-combine.run()
 ```
