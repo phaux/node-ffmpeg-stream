@@ -301,3 +301,7 @@ setInterval(() => {
   fs.createReadStream("intermission_pic.jpg").pipe(joinerInput, { end: false })
 }, 1000 / 30)
 ```
+
+## I want intermission image with audio and other complicated stuff
+
+You should probably use [beamcoder](https://github.com/Streampunk/beamcoder) instead.
