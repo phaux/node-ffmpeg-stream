@@ -114,6 +114,13 @@ You can use `ffprobe` command for now. It might be implemented in the library in
 
 Currently, no.
 
+## Something doesn't work
+
+Try running your program with `DEBUG=ffmpeg-stream` environment variable.
+It will print the ffmpeg command it executes and all the ffmpeg logs.
+The command usually looks something like `ffmpeg -f … -i pipe:3 -f … pipe:4`.
+`pipe:number` means it uses standard input/output instead of a file.
+
 ## Error: Muxer does not support non seekable output
 
 When getting error similar to this:
@@ -131,7 +138,7 @@ When getting error similar to this:
     at Process.ChildProcess._handle.onexit (internal/child_process.js:215:12)
 ```
 
-ffmpeg says that the combination of options you specified doesn't support streaming. You can experiment with calling ffmpeg directly and specifying `-` as output file. Maybe some other options or different format will work. Streaming sequence of JPEGs over websockets worked flawlessly for me (`f: 'mjpeg'`).
+ffmpeg says that the combination of options you specified doesn't support streaming. You can experiment with calling ffmpeg directly and specifying `-` or `pipe:1` as output file. Maybe some other options or different format will work. Streaming sequence of JPEGs over websockets worked flawlessly for me (`{ f: "image2pipe", vcodec: "mjpeg" }`).
 
 You can also use `createBufferedOutputStream`. That tells the library to save output to a temporary file and then create a node stream from that file. It wont start producing data until the conversion is complete, though.
 
