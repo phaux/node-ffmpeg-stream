@@ -182,7 +182,10 @@ class ExtractFrames extends Transform {
     done()
   }
 
-  // TODO: Fix not emitting the last frame in a stream
+  _flush(done) {
+    this.push(this.currentData);
+    done();
+  }
 }
 ```
 
