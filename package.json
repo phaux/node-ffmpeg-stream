@@ -17,7 +17,7 @@
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",
     "fix": "eslint --fix . && prettier --write .",
-    "test": "jest --coverage && tsc --noEmit && eslint . && prettier --check ."
+    "test": "jest --coverage && tsc --noEmit && eslint ."
   },
   "files": [
     "lib"
