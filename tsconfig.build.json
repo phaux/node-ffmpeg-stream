@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src"]
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  "include": ["lib/**/*.js"]
 }
