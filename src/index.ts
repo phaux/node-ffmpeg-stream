@@ -85,7 +85,7 @@ export class Converter {
     if (file != null) {
       return void this.createInputFromFile(file, opts)
     }
-    if (Boolean(opts.buffer)) {
+    if (opts.buffer === true) {
       delete opts.buffer
       return this.createBufferedInputStream(opts)
     }
@@ -101,7 +101,7 @@ export class Converter {
     if (file != null) {
       return void this.createOutputToFile(file, opts)
     }
-    if (Boolean(opts.buffer)) {
+    if (opts.buffer === true) {
       delete opts.buffer
       return this.createBufferedOutputStream(opts)
     }
@@ -168,7 +168,7 @@ export class Converter {
       options,
       file,
       onBegin: async () => {
-        await new Promise((resolve, reject): void => {
+        await new Promise<void>((resolve, reject): void => {
           const writer = createWriteStream(file)
           stream.pipe(writer)
           stream.on("end", () => {

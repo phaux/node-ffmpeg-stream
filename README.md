@@ -169,7 +169,7 @@ class ExtractFrames extends Transform {
       // Find the start of the next frame
       const endIndex = this.currentData.indexOf(
         this.magicNumber,
-        startIndex + this.magicNumber.length
+        startIndex + this.magicNumber.length,
       )
       if (endIndex < 0) break // we haven't got the whole frame yet
 
@@ -183,8 +183,8 @@ class ExtractFrames extends Transform {
   }
 
   _flush(done) {
-    this.push(this.currentData);
-    done();
+    this.push(this.currentData)
+    done()
   }
 }
 ```

@@ -2,30 +2,24 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { createReadStream } from "fs"
 import { checkStream } from "is-mime"
-import mkdirp from "mkdirp"
-import rimraf from "rimraf"
+import { mkdir, rm } from "fs/promises"
 import { ffmpeg } from "../src"
 
 const types = ["image/png", "image/jpeg", "image/gif", "video/webm"]
 
 beforeEach(async () => {
-  await mkdirp(`${__dirname}/media/output`)
+  await mkdir(`${__dirname}/media/output`, { recursive: true })
 })
 
 afterEach(async () => {
-  await new Promise((resolve, reject) => {
-    rimraf(`${__dirname}/media/output`, error => {
-      if (error != null) return reject(error)
-      resolve()
-    })
-  })
+  await rm(`${__dirname}/media/output`, { force: true, recursive: true })
 })
 
 test("should do simple streamed conversion", async () => {
   const converter = ffmpeg()
 
   createReadStream(`${__dirname}/media/cat.jpg`).pipe(
-    converter.input({ f: "image2pipe", vcodec: "mjpeg" })
+    converter.input({ f: "image2pipe", vcodec: "mjpeg" }),
   )
 
   converter
@@ -42,7 +36,7 @@ test("should do simple buffered conversion", async () => {
   const converter = ffmpeg()
 
   createReadStream(`${__dirname}/media/cat.jpg`).pipe(
-    converter.input({ f: "image2pipe", vcodec: "mjpeg", buffer: true })
+    converter.input({ f: "image2pipe", vcodec: "mjpeg", buffer: true }),
   )
 
   converter
@@ -74,7 +68,7 @@ test("should do stream to file conversion", async () => {
   const converter = ffmpeg()
 
   createReadStream(`${__dirname}/media/cat.jpg`).pipe(
-    converter.input({ f: "image2pipe", vcodec: "mjpeg" })
+    converter.input({ f: "image2pipe", vcodec: "mjpeg" }),
   )
 
   converter.output(`${__dirname}/media/output/cat.png`)
@@ -116,7 +110,7 @@ test("should error on invalid input stream", async () => {
   const converter = ffmpeg()
 
   createReadStream(`${__dirname}/media/text.txt`).pipe(
-    converter.input({ f: "image2pipe", vcodec: "mjpeg" })
+    converter.input({ f: "image2pipe", vcodec: "mjpeg" }),
   )
 
   converter
