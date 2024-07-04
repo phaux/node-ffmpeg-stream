@@ -2,9 +2,10 @@
   "name": "ffmpeg-stream",
   "version": "0.7.0",
   "description": "Node bindings to ffmpeg command, exposing stream based API",
-  "author": "phaux <phaux4@gmail.com>",
+  "author": "phaux",
   "repository": "phaux/node-ffmpeg-stream",
   "license": "MIT",
+  "type": "module",
   "keywords": [
     "ffmpeg",
     "convert",
@@ -12,19 +13,16 @@
     "media",
     "video"
   ],
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",
     "fix": "eslint --fix . && prettier --write .",
-    "test": "jest --coverage && tsc --noEmit && eslint ."
+    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --experimental-test-coverage --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit && eslint ."
   },
   "files": [
     "lib"
   ],
-  "jest": {
-    "preset": "ts-jest/presets/default-esm"
-  },
   "prettier": {
     "arrowParens": "avoid",
     "printWidth": 100,
@@ -32,15 +30,12 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.5",
-    "@types/jest": "^29.5.12",
     "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.57.0",
-    "is-mime": "^0.3.0",
-    "jest": "^29.7.0",
+    "file-type": "^19.0.0",
     "prettier": "^3.3.2",
-    "ts-jest": "^29.1.5",
     "typescript": "^5.5.3"
   },
   "dependencies": {
