@@ -13,8 +13,8 @@ You can set a custom ffmpeg path via `FFMPEG_PATH` environment variable (default
 ## Examples
 
 ```js
-const { Converter } = require("ffmpeg-stream")
-const { createReadStream, createWriteStream } = require("fs")
+import { Converter } from "ffmpeg-stream"
+import { createReadStream, createWriteStream } from "node:fs"
 
 async function convert() {
   const converter = new Converter()
@@ -145,8 +145,8 @@ You can also use `createBufferedOutputStream`. That tells the library to save ou
 
 You have to set output format to mjpeg and then split the stream manually by looking at the bytes. You can implement a transform stream which does this:
 
-```ts
-const { Transform } = require("stream")
+```js
+import { Transform } from "node:stream"
 
 class ExtractFrames extends Transform {
   constructor(magicNumberHex) {
@@ -191,7 +191,7 @@ class ExtractFrames extends Transform {
 And then use it like that:
 
 ```js
-const { Converter } = require("ffmpeg-stream")
+import { Converter } from "ffmpeg-stream"
 
 const converter = new Converter()
 
@@ -217,7 +217,7 @@ converter.run()
 > But now want to do it from my node js application automatically.
 
 ```js
-const { Converter } = require("ffmpeg-stream")
+import { Converter } from "ffmpeg-stream"
 
 const frames = ["frame1.jpg", "frame2.jpg", ...etc]
 
@@ -259,8 +259,8 @@ You can turn your main stream into series of `jpeg` images with output format `m
 Then pipe it to second ffmpeg process which combines `jpeg` images into video.
 
 ```js
-const fs = require("fs")
-const { Converter } = require("ffmpeg-stream")
+import * as fs from "node:fs"
+import { Converter } from "ffmpeg-stream"
 
 // create the joiner ffmpeg process (frames to video)
 const joiner = new Converter()
@@ -276,7 +276,7 @@ let streaming = false
 /**
  * A function which streams a single video.
  *
- * @param {stream.Readable} incomingStream - The video stream.
+ * @param {import("node:stream").Readable} incomingStream - The video stream.
  * @param {string} format - The format of the video stream.
  *
  * @returns {Promise<void>} Promise which resolves when the stream ends.
