@@ -5,10 +5,9 @@
 
 Node bindings to ffmpeg command, exposing stream based API.
 
-[CHANGELOG](CHANGELOG.md)
-
-**Note:** ffmpeg must be installed and available in `PATH`.
-You can set a custom ffmpeg path via `FFMPEG_PATH` environment variable (default is just `ffmpeg`).
+> [!NOTE]
+> FFmpeg must be installed and available in `PATH`.
+> You can set a custom ffmpeg path via an argument (default is just `ffmpeg`).
 
 ## Examples
 
