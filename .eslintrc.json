@@ -1,14 +1,6 @@
 {
-  "env": {
-    "es6": true,
-    "node": true
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-type-checked"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended-type-checked"],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": true
   }
 }
