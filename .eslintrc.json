@@ -1,6 +1,19 @@
 {
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended-type-checked"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/strict-type-checked",
+    "plugin:@typescript-eslint/stylistic-type-checked"
+  ],
+  "ignorePatterns": ["/lib/*.d.ts"],
   "parserOptions": {
     "project": true
+  },
+  "rules": {
+    "@typescript-eslint/no-confusing-void-expression": "off",
+    "@typescript-eslint/restrict-template-expressions": ["error", { "allowNumber": true }],
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "eqeqeq": ["error", "smart"],
+    "no-else-return": "warn",
+    "no-implicit-coercion": "warn"
   }
 }
