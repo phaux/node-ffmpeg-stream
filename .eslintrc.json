@@ -12,6 +12,7 @@
     "@typescript-eslint/no-confusing-void-expression": "off",
     "@typescript-eslint/restrict-template-expressions": ["error", { "allowNumber": true }],
     "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/promise-function-async": "error",
     "eqeqeq": ["error", "smart"],
     "no-else-return": "warn",
     "no-implicit-coercion": "warn"
