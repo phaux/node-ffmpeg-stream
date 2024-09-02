@@ -2,7 +2,7 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM"],
     "module": "Node16",
     "moduleResolution": "Node16",
     "noEmit": true,
