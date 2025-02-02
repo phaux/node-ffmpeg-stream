@@ -119,7 +119,7 @@ void test("should error on invalid input stream", async () => {
 
   const check = fileTypeStream(converter.createOutputStream({ f: "image2", vcodec: "mjpeg" })).then(
     stream => {
-      assert(!stream.fileType?.mime)
+      assert(stream.fileType?.mime == null)
       stream.pipe(createWriteStream(`${mediaDir}/output/cat.jpg`))
     },
   )
@@ -135,7 +135,7 @@ void test("should output empty stream on kill", async () => {
 
   const check = fileTypeStream(converter.createOutputStream({ f: "image2", vcodec: "png" })).then(
     stream => {
-      assert(!stream.fileType?.mime)
+      assert(stream.fileType?.mime == null)
       stream.pipe(createWriteStream(`${mediaDir}/output/cat.png`))
     },
   )
