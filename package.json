@@ -17,8 +17,7 @@
   "exports": "./lib/index.js",
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",
-    "fix": "eslint --fix . && prettier --write .",
-    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit && eslint ."
+    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit"
   },
   "files": [
     "lib"
@@ -31,9 +30,6 @@
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/node": "^22.0.2",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^8.57.0",
     "file-type": "^20.0.1",
     "prettier": "^3.3.2",
     "typescript": "^5.5.3"
