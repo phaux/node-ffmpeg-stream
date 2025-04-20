@@ -5,14 +5,9 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    groups:
-      typescript-eslint:
-        patterns:
-          - "@typescript-eslint/*"
-    ignore:
-      - dependency-name: eslint
-        update-types:
-          - version-update:semver-major
+    cooldown:
+      semver-major-days: 90
+      semver-minor-days: 30
 
   - package-ecosystem: github-actions
     directory: /
