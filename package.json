@@ -18,7 +18,7 @@
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",
     "fix": "eslint --fix . && prettier --write .",
-    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --experimental-test-coverage --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit && eslint ."
+    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit && eslint ."
   },
   "files": [
     "lib"
