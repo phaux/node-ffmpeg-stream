@@ -17,7 +17,7 @@
   "exports": "./lib/index.js",
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",
-    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit"
+    "test": "node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --experimental-test-coverage --test-reporter lcov --test-reporter-destination lcov.info && tsc --noEmit"
   },
   "files": [
     "lib"
