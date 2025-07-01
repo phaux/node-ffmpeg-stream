@@ -7,8 +7,7 @@ updates:
       interval: monthly
     cooldown:
       semver-major-days: 90
-      semver-minor-days: 30
-
+      semver-minor-days: 45
   - package-ecosystem: github-actions
     directory: /
     schedule:
