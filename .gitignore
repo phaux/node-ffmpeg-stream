@@ -1,3 +1,4 @@
 /node_modules/
-/lib/*.d.ts
+*.d.ts
+*.js
 lcov.info

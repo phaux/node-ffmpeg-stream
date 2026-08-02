@@ -1,13 +1,15 @@
 import debug from "debug"
-import assert from "node:assert"
-import { spawn } from "node:child_process"
+import assert from "node:assert/strict"
+import { spawn, type ChildProcess } from "node:child_process"
 import { createReadStream, createWriteStream } from "node:fs"
 import { unlink } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { PassThrough } from "node:stream"
+import { PassThrough, type Readable, type Writable } from "node:stream"
 
 const dbg = debug("ffmpeg-stream")
+
+/** Exit codes which aren't considered errors */
 const EXIT_CODES = [0, 255]
 
 /**
@@ -27,39 +29,21 @@ const EXIT_CODES = [0, 255]
  * ```
  */
 export class Converter {
-  /**
-   * @private
-   */
-  fdCount = 0
-
-  /**
-   * @private
-   * @readonly
-   * @type {ConverterPipe[]}
-   */
-  pipes = []
-
-  /**
-   * @private
-   * @type {import("node:child_process").ChildProcess | undefined}
-   */
-  process
-
-  /**
-   * @private
-   */
-  killed = false
+  readonly #ffmpegPath: string
+  #fdCount = 0
+  readonly #pipes: ConverterPipe[] = []
+  #process?: ChildProcess
+  #killed = false
 
   /**
    * Initializes the converter.
    *
    * Remember to call {@link Converter.run} to actually start the FFmpeg process.
    *
-   * @param {string} [ffmpegPath] Path to the FFmpeg executable. (default: `"ffmpeg"`)
+   * @param ffmpegPath Path to the FFmpeg executable. (default: `"ffmpeg"`)
    */
   constructor(ffmpegPath = "ffmpeg") {
-    /** @private */
-    this.ffmpegPath = ffmpegPath
+    this.#ffmpegPath = ffmpegPath
   }
 
   /**
@@ -67,8 +51,8 @@ export class Converter {
    *
    * This builds a command like the one you would normally use in the terminal.
    *
-   * @param {string} file Path to the input file.
-   * @param {ConverterPipeOptions} [options] FFmpeg options for this input.
+   * @param file Path to the input file.
+   * @param options FFmpeg options for this input.
    *
    * @example
    *
@@ -83,8 +67,8 @@ export class Converter {
    * await converter.run()
    * ```
    */
-  createInputFromFile(file, options = {}) {
-    this.pipes.push({
+  createInputFromFile(file: string, options: ConverterPipeOptions = {}) {
+    this.#pipes.push({
       type: "input",
       options,
       file,
@@ -96,8 +80,8 @@ export class Converter {
    *
    * This builds a command like the one you would normally use in the terminal.
    *
-   * @param {string} file Path to the output file.
-   * @param {ConverterPipeOptions} [options] FFmpeg options for this output.
+   * @param file Path to the output file.
+   * @param options FFmpeg options for this output.
    *
    * @example
    *
@@ -112,8 +96,8 @@ export class Converter {
    * await converter.run()
    * ```
    */
-  createOutputToFile(file, options = {}) {
-    this.pipes.push({
+  createOutputToFile(file: string, options: ConverterPipeOptions = {}) {
+    this.#pipes.push({
       type: "output",
       options,
       file,
@@ -128,8 +112,8 @@ export class Converter {
    * Remember to specify the [`f` option](https://ffmpeg.org/ffmpeg.html#Main-options),
    * which specifies the format of the input data.
    *
-   * @param {ConverterPipeOptions} options FFmpeg options for this input.
-   * @returns {import("node:stream").Writable} A stream which will be written to the FFmpeg process' stdio.
+   * @param options FFmpeg options for this input.
+   * @returns A stream which will be written to the FFmpeg process' stdio.
    *
    * @example
    *
@@ -146,10 +130,10 @@ export class Converter {
    * await converter.run()
    * ```
    */
-  createInputStream(options) {
+  createInputStream(options: ConverterPipeOptions): Writable {
     const stream = new PassThrough()
     const fd = this.getUniqueFd()
-    this.pipes.push({
+    this.#pipes.push({
       type: "input",
       options,
       file: `pipe:${fd}`,
@@ -173,8 +157,8 @@ export class Converter {
    * Remember to specify the [`f` option](https://ffmpeg.org/ffmpeg.html#Main-options),
    * which specifies the format of the output data.
    *
-   * @param {ConverterPipeOptions} options FFmpeg options for this output.
-   * @returns {import("node:stream").Readable} A stream which will be read from the FFmpeg process' stdio.
+   * @param options FFmpeg options for this output.
+   * @returns A stream which will be read from the FFmpeg process' stdio.
    *
    * @example
    *
@@ -190,10 +174,10 @@ export class Converter {
    * await converter.run()
    * ```
    */
-  createOutputStream(options) {
+  createOutputStream(options: ConverterPipeOptions): Readable {
     const stream = new PassThrough()
     const fd = this.getUniqueFd()
-    this.pipes.push({
+    this.#pipes.push({
       type: "output",
       options,
       file: `pipe:${fd}`,
@@ -215,18 +199,18 @@ export class Converter {
    *
    * Use this method if the format you want to read doesn't support non-seekable input.
    *
-   * @param {ConverterPipeOptions} options FFmpeg options for this input.
-   * @returns {import("node:stream").Writable} A stream which will be written to the temporary file.
+   * @param options FFmpeg options for this input.
+   * @returns A stream which will be written to the temporary file.
    */
-  createBufferedInputStream(options) {
+  createBufferedInputStream(options: ConverterPipeOptions): Writable {
     const stream = new PassThrough()
     const file = getTmpPath("ffmpeg-")
-    this.pipes.push({
+    this.#pipes.push({
       type: "input",
       options,
       file,
       onBegin: async () => {
-        await new /** @type {typeof Promise<void>} */ (Promise)((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           const writer = createWriteStream(file)
           stream.pipe(writer)
           stream.on("end", () => {
@@ -254,18 +238,18 @@ export class Converter {
    *
    * Use this method if the format you want to write doesn't support non-seekable output.
    *
-   * @param {ConverterPipeOptions} options FFmpeg options for this output.
-   * @returns {import("node:stream").Readable} A stream which will be read from the temporary file.
+   * @param options FFmpeg options for this output.
+   * @returns A stream which will be read from the temporary file.
    */
-  createBufferedOutputStream(options) {
+  createBufferedOutputStream(options: ConverterPipeOptions): Readable {
     const stream = new PassThrough()
     const file = getTmpPath("ffmpeg-")
-    this.pipes.push({
+    this.#pipes.push({
       type: "output",
       options,
       file,
       onFinish: async () => {
-        await new /** @type {typeof Promise<void>} */ (Promise)((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           const reader = createReadStream(file)
           reader.pipe(stream)
           reader.on("end", () => {
@@ -288,13 +272,12 @@ export class Converter {
    *
    * You can use {@link Converter.kill} to cancel the conversion.
    *
-   * @returns {Promise<void>} Promise which resolves on normal exit or kill, but rejects on ffmpeg error.
+   * @returns A promise which resolves on normal exit or kill, but rejects on ffmpeg error.
    */
   async run() {
-    /** @type {ConverterPipe[]} */
-    const pipes = []
+    const pipes: ConverterPipe[] = []
     try {
-      for (const pipe of this.pipes) {
+      for (const pipe of this.#pipes) {
         dbg(`prepare ${pipe.type}`)
         await pipe.onBegin?.()
         pipes.push(pipe)
@@ -302,18 +285,17 @@ export class Converter {
 
       const args = this.getSpawnArgs()
       const stdio = this.getStdioArg()
-      dbg(`spawn: ${this.ffmpegPath} ${args.join(" ")}`)
+      dbg(`spawn: ${this.#ffmpegPath} ${args.join(" ")}`)
       dbg(`spawn stdio: ${stdio.join(" ")}`)
-      this.process = spawn(this.ffmpegPath, args, { stdio })
+      this.#process = spawn(this.#ffmpegPath, args, { stdio })
       const finished = this.handleProcess()
 
-      for (const pipe of this.pipes) {
-        pipe.onSpawn?.(this.process)
+      for (const pipe of this.#pipes) {
+        pipe.onSpawn?.(this.#process)
       }
 
-      if (this.killed) {
-        // the converter was already killed so stop it immediately
-        this.process.kill()
+      if (this.#killed) {
+        this.#process.kill()
       }
 
       await finished
@@ -328,49 +310,33 @@ export class Converter {
    * Stops the conversion process.
    */
   kill() {
-    // kill the process if it already started
-    this.process?.kill()
-    // set the flag so it will be killed after it's initialized
-    this.killed = true
+    this.#process?.kill()
+    this.#killed = true
   }
 
-  /**
-   * @private
-   * @returns {number}
-   */
-  getUniqueFd() {
-    return this.fdCount++ + 3
+  private getUniqueFd() {
+    return this.#fdCount++ + 3
   }
 
   /**
    * Returns stdio pipes which can be passed to {@link spawn}.
-   * @private
-   * @returns {Array<"ignore" | "pipe">}
    */
-  getStdioArg() {
-    return [
-      "ignore",
-      "ignore",
-      "pipe",
-      .../** @type {typeof Array<"pipe">} */ (Array)(this.fdCount).fill("pipe"),
-    ]
+  private getStdioArg(): Array<"ignore" | "pipe"> {
+    return ["ignore", "ignore", "pipe", ...Array<"pipe">(this.#fdCount).fill("pipe")]
   }
 
   /**
    * Returns arguments which can be passed to {@link spawn}.
-   * @private
-   * @returns {string[]}
    */
-  getSpawnArgs() {
-    /** @type {string[]} */
-    const args = []
+  private getSpawnArgs(): string[] {
+    const args: string[] = []
 
-    for (const pipe of this.pipes) {
+    for (const pipe of this.#pipes) {
       if (pipe.type !== "input") continue
       args.push(...stringifyArgs(pipe.options))
       args.push("-i", pipe.file)
     }
-    for (const pipe of this.pipes) {
+    for (const pipe of this.#pipes) {
       if (pipe.type !== "output") continue
       args.push(...stringifyArgs(pipe.options))
       args.push(pipe.file)
@@ -379,45 +345,38 @@ export class Converter {
     return args
   }
 
-  /**
-   * @private
-   */
-  async handleProcess() {
-    await new /** @type {typeof Promise<void>} */ (Promise)((resolve, reject) => {
+  private async handleProcess() {
+    await new Promise<void>((resolve, reject) => {
       let logSectionNum = 0
-      /** @type {string[]} */
-      const logLines = []
+      const logLines: string[] = []
 
-      assert(this.process != null, "process should be initialized")
+      assert(this.#process != null, "process should be initialized")
 
-      if (this.process.stderr != null) {
-        this.process.stderr.setEncoding("utf8")
+      if (this.#process.stderr != null) {
+        this.#process.stderr.setEncoding("utf8")
 
-        this.process.stderr.on(
-          "data",
-          /** @type {(data: string) => void} */ data => {
-            const lines = data.split(/\r\n|\r|\n/u)
-            for (const line of lines) {
-              // skip empty lines
-              if (/^\s*$/u.exec(line) != null) continue
-              // if not indented: increment section counter
-              if (/^\s/u.exec(line) == null) logSectionNum++
-              // only log sections following the first one
-              if (logSectionNum > 1) {
-                dbg(`log: ${line}`)
-                logLines.push(line)
-              }
+        this.#process.stderr.on("data", (data: string) => {
+          const lines = data.split(/\r\n|\r|\n/u)
+          for (const line of lines) {
+            // skip empty lines
+            if (/^\s*$/u.exec(line) != null) continue
+            // if not indented: increment section counter
+            if (/^\s/u.exec(line) == null) logSectionNum++
+            // only log sections following the first one
+            if (logSectionNum > 1) {
+              dbg(`log: ${line}`)
+              logLines.push(line)
             }
-          },
-        )
+          }
+        })
       }
 
-      this.process.on("error", err => {
+      this.#process.on("error", err => {
         dbg(`error: ${err.message}`)
         reject(err)
       })
 
-      this.process.on("exit", (code, signal) => {
+      this.#process.on("exit", (code, signal) => {
         dbg(`exit: code=${code ?? "unknown"} sig=${signal ?? "unknown"}`)
         if (code == null) return resolve()
         if (EXIT_CODES.includes(code)) return resolve()
@@ -430,13 +389,9 @@ export class Converter {
 
 /**
  * Stringifies FFmpeg options object into command line arguments array.
- *
- * @param {ConverterPipeOptions} options
- * @returns {string[]}
  */
-function stringifyArgs(options) {
-  /** @type {string[]} */
-  const args = []
+function stringifyArgs(options: ConverterPipeOptions): string[] {
+  const args: string[] = []
 
   for (const [option, value] of Object.entries(options)) {
     if (Array.isArray(value)) {
@@ -459,9 +414,6 @@ function stringifyArgs(options) {
 
 /**
  * Returns a random file path in the system's temporary directory.
- *
- * @param {string} [prefix]
- * @param {string} [suffix]
  */
 function getTmpPath(prefix = "", suffix = "") {
   const dir = tmpdir()
@@ -469,20 +421,13 @@ function getTmpPath(prefix = "", suffix = "") {
   return join(dir, `${prefix}${id}${suffix}`)
 }
 
-/**
- * @param {import("node:stream").Readable | import("node:stream").Writable} stream
- * @param {string} name
- */
-function debugStream(stream, name) {
+function debugStream(stream: Readable | Writable, name: string) {
   stream.on("error", err => {
     dbg(`${name} error: ${err.message}`)
   })
-  stream.on(
-    "data",
-    /** @type {(data: Buffer | string) => void} */ data => {
-      dbg(`${name} data: ${data.length} bytes`)
-    },
-  )
+  stream.on("data", (data: Buffer | string) => {
+    dbg(`${name} data: ${data.length} bytes`)
+  })
   stream.on("finish", () => {
     dbg(`${name} finish`)
   })
@@ -503,20 +448,20 @@ function debugStream(stream, name) {
  * ```js
  * const options = { f: "image2", vcodec: "png" }
  * ```
- *
- * @typedef {Record<string, string | number | boolean | Array<string | null | undefined> | null | undefined>} ConverterPipeOptions
  */
+export type ConverterPipeOptions = Record<
+  string,
+  string | number | boolean | Array<string | null | undefined> | null | undefined
+>
 
 /**
  * Data about a single input or output of a {@link Converter}.
- *
- * @ignore
- * @internal
- * @typedef {Object} ConverterPipe
- * @property {"input" | "output"} type
- * @property {ConverterPipeOptions} options
- * @property {string} file
- * @property {() => Promise<void>} [onBegin]
- * @property {(process: import("node:child_process").ChildProcess) => void} [onSpawn]
- * @property {() => Promise<void>} [onFinish]
  */
+interface ConverterPipe {
+  type: "input" | "output"
+  options: ConverterPipeOptions
+  file: string
+  onBegin?: () => Promise<void>
+  onSpawn?: (process: ChildProcess) => void
+  onFinish?: () => Promise<void>
+}

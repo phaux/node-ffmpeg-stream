@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
+    "erasableSyntaxOnly": true,
     "lib": ["ESNext", "DOM"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
     "strict": true,
     "target": "esnext",
-    "types": ["@types/node"]
+    "types": ["node"],
+    "verbatimModuleSyntax": true
   }
 }

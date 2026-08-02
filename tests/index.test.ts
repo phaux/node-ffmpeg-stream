@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import { createReadStream, createWriteStream } from "node:fs"
 import { mkdir, rm } from "node:fs/promises"
 import { afterEach, beforeEach, test } from "node:test"
-import { Converter } from "../lib/index.js"
+import { Converter } from "../lib/index.ts"
 
 const mediaDir = `${import.meta.dirname}/media`
 
