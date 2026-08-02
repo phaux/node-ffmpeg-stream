@@ -16,6 +16,7 @@
   "main": "./lib/index.js",
   "exports": "./lib/index.js",
   "scripts": {
+    "format": "prettier --write .",
     "prepare": "tsc -p tsconfig.build.json",
     "test": "tsc --noEmit && node --test --test-timeout 10000 --test-reporter spec --test-reporter-destination stdout --experimental-test-coverage --test-reporter lcov --test-reporter-destination lcov.info"
   },
